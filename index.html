@@ -44,7 +44,7 @@
     }
 
     .container {
-      max-width: 560px;
+      max-width: 650px;
       margin: 25px auto;
       padding: 0 16px 50px;
     }
@@ -147,14 +147,36 @@
       color: #f5c542;
     }
 
+    .media-area {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin: 15px 0;
+    }
+
     .exercicio-img {
       width: 100%;
-      max-height: 250px;
+      max-height: 320px;
       object-fit: cover;
       border-radius: 16px;
       border: 2px solid #e50914;
-      margin: 15px 0;
       background: #222;
+      display: block;
+    }
+
+    .video-box {
+      width: 100%;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 2px solid #e50914;
+      background: #000;
+    }
+
+    .video-box iframe {
+      width: 100%;
+      height: 330px;
+      border: none;
+      display: block;
     }
 
     .exercicio-nome {
@@ -276,6 +298,11 @@
       line-height: 1.4;
     }
 
+    .texto-central {
+      text-align: center;
+      color: #aaa;
+    }
+
     @media (max-width: 600px) {
       .logo {
         font-size: 30px;
@@ -287,6 +314,10 @@
 
       .card {
         padding: 18px;
+      }
+
+      .video-box iframe {
+        height: 230px;
       }
     }
   </style>
@@ -341,11 +372,11 @@
       <label>Quantidade de repetições</label>
       <input type="text" id="repsExercicioNovo" placeholder="Ex: 12 ou 10 a 12 ou 15/12/10" />
 
-      <label>Link do vídeo no YouTube</label>
-      <input type="text" id="youtubeExercicioNovo" placeholder="Opcional. Cole aqui o link do YouTube." />
+      <label>Link do GIF ou imagem</label>
+      <input type="text" id="imagemExercicioNovo" placeholder="Opcional. Pode ser GIF ou imagem." />
 
-      <label>Link da imagem do exercício</label>
-      <input type="text" id="imagemExercicioNovo" placeholder="Opcional. Se deixar vazio, usa imagem padrão." />
+      <label>Link do vídeo no YouTube</label>
+      <input type="text" id="youtubeExercicioNovo" placeholder="Opcional. Cole o link normal do YouTube." />
 
       <div class="botoes">
         <button onclick="adicionarExercicioNoTreino()">Adicionar exercício</button>
@@ -353,7 +384,7 @@
 
       <div class="lista-exercicios" id="listaExerciciosNovo">
         <h3>Exercícios do treino</h3>
-        <p style="text-align:center;color:#aaa;">Nenhum exercício adicionado ainda.</p>
+        <p class="texto-central">Nenhum exercício adicionado ainda.</p>
       </div>
 
       <div class="botoes">
@@ -374,13 +405,18 @@
         <div class="ranking">🏆 Posição: <span id="posicaoAluno">1</span> | Pontos: <span id="pontosAluno">0</span></div>
       </div>
 
-      <img id="imagemExercicio" class="exercicio-img" src="" alt="Imagem do exercício" />
+      <div class="media-area">
+        <img id="imagemExercicio" class="exercicio-img" src="" alt="Imagem do exercício" />
+        <div id="videoBox" class="video-box" style="display:none;">
+          <iframe id="videoExercicio" src="" allowfullscreen></iframe>
+        </div>
+      </div>
 
       <div class="exercicio-nome" id="nomeExercicio"></div>
       <div class="exercicio-detalhe" id="detalheExercicio"></div>
 
       <div class="botoes" id="botaoYoutubeArea" style="display:none;">
-        <button onclick="abrirYoutube()">Assistir vídeo do exercício</button>
+        <button onclick="abrirYoutube()">Abrir vídeo no YouTube</button>
       </div>
 
       <div id="seriesContainer"></div>
@@ -488,6 +524,29 @@
       });
     }
 
+    function converterYoutubeParaEmbed(url) {
+      if (!url) return "";
+
+      let videoId = "";
+
+      if (url.includes("youtube.com/watch?v=")) {
+        const partes = url.split("v=");
+        videoId = partes[1] ? partes[1].split("&")[0] : "";
+      } else if (url.includes("youtu.be/")) {
+        const partes = url.split("youtu.be/");
+        videoId = partes[1] ? partes[1].split("?")[0].split("&")[0] : "";
+      } else if (url.includes("youtube.com/shorts/")) {
+        const partes = url.split("shorts/");
+        videoId = partes[1] ? partes[1].split("?")[0].split("&")[0] : "";
+      } else if (url.includes("youtube.com/embed/")) {
+        return url;
+      }
+
+      if (!videoId) return "";
+
+      return "https://www.youtube.com/embed/" + videoId;
+    }
+
     function iniciarTreino() {
       aluno = document.getElementById("nomeAluno").value.trim();
 
@@ -530,16 +589,39 @@
       const exercicio = treinoSelecionado[exercicioAtual];
 
       document.getElementById("nomeExercicio").innerText = exercicio.nome;
-      document.getElementById("imagemExercicio").src = exercicio.imagem || imagemPadrao;
 
       const reps = exercicio.reps || "Não informado";
-      document.getElementById("detalheExercicio").innerText = exercicio.series + " séries x " + reps + " repetições";
+      document.getElementById("detalheExercicio").innerText =
+        exercicio.series + " séries x " + reps + " repetições";
 
-      youtubeAtual = exercicio.youtube || "";
+      const imagem = exercicio.imagem || "";
+      const youtube = exercicio.youtube || "";
+      const youtubeEmbed = converterYoutubeParaEmbed(youtube);
 
-      if (youtubeAtual !== "") {
+      const imgEl = document.getElementById("imagemExercicio");
+      const videoBox = document.getElementById("videoBox");
+      const videoEl = document.getElementById("videoExercicio");
+
+      if (imagem && imagem.trim() !== "") {
+        imgEl.src = imagem;
+        imgEl.style.display = "block";
+      } else if (!youtubeEmbed) {
+        imgEl.src = imagemPadrao;
+        imgEl.style.display = "block";
+      } else {
+        imgEl.style.display = "none";
+        imgEl.src = "";
+      }
+
+      youtubeAtual = youtube;
+
+      if (youtubeEmbed) {
+        videoBox.style.display = "block";
+        videoEl.src = youtubeEmbed;
         document.getElementById("botaoYoutubeArea").style.display = "flex";
       } else {
+        videoBox.style.display = "none";
+        videoEl.src = "";
         document.getElementById("botaoYoutubeArea").style.display = "none";
       }
 
@@ -581,6 +663,9 @@
     }
 
     function proximoExercicio() {
+      const videoEl = document.getElementById("videoExercicio");
+      videoEl.src = "";
+
       if (exercicioAtual < treinoSelecionado.length - 1) {
         exercicioAtual++;
         carregarExercicio();
@@ -590,6 +675,9 @@
     }
 
     function voltarExercicio() {
+      const videoEl = document.getElementById("videoExercicio");
+      videoEl.src = "";
+
       if (exercicioAtual > 0) {
         exercicioAtual--;
         carregarExercicio();
@@ -644,7 +732,7 @@
       const div = document.getElementById("rankingLista");
 
       if (ranking.length === 0) {
-        div.innerHTML = "<h3>🏆 Ranking</h3><p style='text-align:center;color:#aaa;'>Nenhum aluno pontuou ainda.</p>";
+        div.innerHTML = "<h3>🏆 Ranking</h3><p class='texto-central'>Nenhum aluno pontuou ainda.</p>";
         return;
       }
 
@@ -722,6 +810,7 @@
     }
 
     function trocarAluno() {
+      document.getElementById("videoExercicio").src = "";
       document.getElementById("telaTreino").style.display = "none";
       document.getElementById("telaInicial").style.display = "block";
       mostrarRanking();
@@ -729,6 +818,7 @@
     }
 
     function reiniciar() {
+      document.getElementById("videoExercicio").src = "";
       document.getElementById("nomeAluno").value = "";
       document.getElementById("telaFinal").style.display = "none";
       document.getElementById("telaInicial").style.display = "block";
@@ -757,8 +847,8 @@
       const nome = document.getElementById("nomeExercicioNovo").value.trim().toUpperCase();
       const series = Number(document.getElementById("seriesExercicioNovo").value);
       const reps = document.getElementById("repsExercicioNovo").value.trim();
-      const youtube = document.getElementById("youtubeExercicioNovo").value.trim();
       const imagem = document.getElementById("imagemExercicioNovo").value.trim();
+      const youtube = document.getElementById("youtubeExercicioNovo").value.trim();
 
       if (nome === "") {
         alert("Digite o nome do exercício.");
@@ -779,15 +869,15 @@
         nome: nome,
         series: series,
         reps: reps,
-        youtube: youtube,
-        imagem: imagem || imagemPadrao
+        imagem: imagem,
+        youtube: youtube
       });
 
       document.getElementById("nomeExercicioNovo").value = "";
       document.getElementById("seriesExercicioNovo").value = "";
       document.getElementById("repsExercicioNovo").value = "";
-      document.getElementById("youtubeExercicioNovo").value = "";
       document.getElementById("imagemExercicioNovo").value = "";
+      document.getElementById("youtubeExercicioNovo").value = "";
 
       atualizarListaExerciciosNovo();
     }
@@ -798,7 +888,7 @@
       if (exerciciosNovoTreino.length === 0) {
         div.innerHTML = `
           <h3>Exercícios do treino</h3>
-          <p style="text-align:center;color:#aaa;">Nenhum exercício adicionado ainda.</p>
+          <p class="texto-central">Nenhum exercício adicionado ainda.</p>
         `;
         return;
       }
@@ -811,7 +901,8 @@
             <div>
               <strong>${index + 1}. ${exercicio.nome}</strong>
               <small>${exercicio.series} séries x ${exercicio.reps} reps</small>
-              ${exercicio.youtube ? "<small>Vídeo cadastrado</small>" : ""}
+              ${exercicio.imagem ? "<small>GIF/Imagem cadastrado</small>" : ""}
+              ${exercicio.youtube ? "<small>Vídeo do YouTube cadastrado</small>" : ""}
             </div>
             <button class="btn-perigo" onclick="removerExercicioNovo(${index})">Remover</button>
           </div>
@@ -868,7 +959,7 @@
       const div = document.getElementById("listaTreinosCriados");
 
       if (treinos.length === 0) {
-        div.innerHTML = "<p style='text-align:center;color:#aaa;'>Nenhum treino criado ainda.</p>";
+        div.innerHTML = "<p class='texto-central'>Nenhum treino criado ainda.</p>";
         return;
       }
 
