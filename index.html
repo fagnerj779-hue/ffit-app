@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>FFIT Treino</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body { font-family: Arial; text-align: center; background: #fff; }
+h1 { color: red; }
+
+.card {
+  background: #f5f5f5;
+  padding: 15px;
+  border-radius: 10px;
+  width: 330px;
+  margin: auto;
+}
+
+button {
+  background: red;
+  color: white;
+  border: none;
+  padding: 10px;
+  margin-top: 5px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.serie {
+  display: flex;
+  justify-content: space-between;
+  margin: 8px 0;
+}
+
+.checked { text-decoration: line-through; color: gray; }
+
+.lista { text-align: left; font-size: 14px; }
+</style>
+</head>
+
+<body>
+
+<h1>FFIT Treino</h1>
+
+<div id="login" class="card">
+  <h2>Entrar</h2>
+  <input id="nomeAluno" placeholder="Digite seu nome">
+  <br>
+  <button onclick="entrar()">Entrar</button>
+</div>
+
+<div id="app" style="display:none;" class="card">
+
+<h2 id="tituloAluno"></h2>
+<button onclick="trocarAluno()">Trocar aluno</button>
+
+<h3 id="ranking"></h3>
+
+<video id="video" width="250" autoplay loop muted></video>
+
+<p><b id="nomeExercicio"></b></p>
+
+<div id="series"></div>
+
+<button onclick="proximoExercicio()">Próximo exercício</button>
+
+<p id="timer"></p>
+
+<hr>
+
+<h3>📊 Histórico</h3>
+<div id="historico" class="lista"></div>
+
+<canvas id="grafico" width="300" height="200"></canvas>
+
+</div>
+
+<script>
+
+let exercicios = [
+  {nome: "AGACHAMENTO", video: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"},
+  {nome: "LEG PRESS", video: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"}
+];
+
+let aluno = localStorage.getItem("aluno");
+let atual = 0;
+let chart;
+
+function entrar() {
+  let nome = document.getElementById("nomeAluno").value;
+  if (!nome) return alert("Digite seu nome");
+
+  localStorage.setItem("aluno", nome);
+
+  if (!localStorage.getItem(nome + "_pontos")) {
+    localStorage.setItem(nome + "_pontos", 0);
+  }
+
+  iniciarApp();
+}
+
+function trocarAluno() {
+  localStorage.removeItem("aluno");
+  location.reload();
+}
+
+function iniciarApp() {
+  aluno = localStorage.getItem("aluno");
+
+  document.getElementById("login").style.display = "none";
+  document.getElementById("app").style.display = "block";
+
+  document.getElementById("tituloAluno").innerText = "Aluno: " + aluno;
+
+  atualizarRanking();
+  mostrarHistorico();
+  criarGrafico();
+
+  carregarExercicio();
+}
+
+function atualizarRanking() {
+  let ranking = [];
+
+  for (let i = 0; i < localStorage.length; i++) {
+    let key = localStorage.key(i);
+
+    if (key.includes("_pontos")) {
+      let nome = key.replace("_pontos", "");
+      let pontos = parseInt(localStorage.getItem(key));
+      ranking.push({nome, pontos});
+    }
+  }
+
+  ranking.sort((a,b) => b.pontos - a.pontos);
+
+  let pos = ranking.findIndex(r => r.nome === aluno) + 1;
+
+  document.getElementById("ranking").innerText =
+    "🏆 Posição: " + pos + " | Pontos: " + localStorage.getItem(aluno + "_pontos");
+}
+
+function ganharPontos(valor) {
+  let pontos = parseInt(localStorage.getItem(aluno + "_pontos")) || 0;
+  pontos += valor;
+  localStorage.setItem(aluno + "_pontos", pontos);
+  atualizarRanking();
+}
+
+function salvarTreinoFinalizado() {
+  let historico = JSON.parse(localStorage.getItem(aluno + "_historico")) || [];
+
+  let data = new Date().toLocaleDateString();
+
+  historico.push(data);
+
+  localStorage.setItem(aluno + "_historico", JSON.stringify(historico));
+
+  mostrarHistorico();
+  criarGrafico();
+}
+
+function mostrarHistorico() {
+  let historico = JSON.parse(localStorage.getItem(aluno + "_historico")) || [];
+
+  let div = document.getElementById("historico");
+  div.innerHTML = "";
+
+  historico.slice().reverse().forEach(item => {
+    let p = document.createElement("p");
+    p.innerText = "Treino em " + item;
+    div.appendChild(p);
+  });
+}
+
+function criarGrafico() {
+  let historico = JSON.parse(localStorage.getItem(aluno + "_historico")) || [];
+
+  let labels = historico.map((_, i) => "Treino " + (i+1));
+  let dados = historico.map((_, i) => i + 1);
+
+  let ctx = document.getElementById("grafico").getContext("2d");
+
+  if (chart) chart.destroy();
+
+  chart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "Evolução",
+        data: dados,
+        borderColor: "red",
+        borderWidth: 2,
+        fill: false
+      }]
+    }
+  });
+}
+
+function carregarExercicio() {
+  document.getElementById("nomeExercicio").innerText = exercicios[atual].nome;
+  document.getElementById("video").src = exercicios[atual].video;
+
+  let container = document.getElementById("series");
+  container.innerHTML = "";
+
+  for (let i = 1; i <= 3; i++) {
+    let div = document.createElement("div");
+    div.className = "serie";
+
+    let texto = document.createElement("span");
+    texto.innerText = "Série " + i;
+
+    let btn = document.createElement("button");
+    btn.innerText = "✔";
+
+    btn.onclick = () => {
+      texto.classList.add("checked");
+      ganharPontos(5);
+      iniciarTimer();
+    };
+
+    div.appendChild(texto);
+    div.appendChild(btn);
+
+    container.appendChild(div);
+  }
+}
+
+function iniciarTimer() {
+  let tempo = 60;
+
+  let intervalo = setInterval(() => {
+    document.getElementById("timer").innerText = "Descanso: " + tempo + "s";
+    tempo--;
+
+    if (tempo < 0) {
+      clearInterval(intervalo);
+    }
+  }, 1000);
+}
+
+function proximoExercicio() {
+  atual++;
+
+  if (atual >= exercicios.length) {
+    alert("Treino finalizado 🔥");
+    atual = 0;
+    ganharPontos(20);
+    salvarTreinoFinalizado();
+  }
+
+  carregarExercicio();
+}
+
+if (aluno) iniciarApp();
+
+</script>
+
+</body>
+</html>
