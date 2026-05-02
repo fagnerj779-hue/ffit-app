@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FFIT Treino</title>
-
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
@@ -128,6 +127,20 @@
       justify-content: center;
       margin-top: 16px;
       flex-wrap: wrap;
+    }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .menu-btn {
+      width: 100%;
+      padding: 20px;
+      font-size: 18px;
+      border-radius: 14px;
     }
 
     .info-aluno {
@@ -363,7 +376,52 @@
 
   <div class="container">
 
-    <div class="card" id="telaInicial">
+    <div class="card" id="telaMenu">
+      <h2>Bem-vindo</h2>
+      <p class="texto-central">Escolha como deseja acessar o sistema.</p>
+
+      <div class="menu-grid">
+        <button class="menu-btn" onclick="abrirAreaAluno()">Sou aluno</button>
+        <button class="menu-btn btn-secundario" onclick="abrirLoginProfessor()">Área do professor</button>
+      </div>
+    </div>
+
+    <div class="card" id="telaLoginProfessor" style="display:none;">
+      <h2>Área do professor</h2>
+
+      <label>Senha do professor</label>
+      <input type="password" id="senhaProfessor" placeholder="Digite a senha" />
+
+      <div class="botoes">
+        <button onclick="entrarProfessor()">Entrar</button>
+        <button class="btn-secundario" onclick="voltarMenu()">Voltar</button>
+      </div>
+    </div>
+
+    <div class="card" id="telaProfessor" style="display:none;">
+      <h2>Painel do professor</h2>
+
+      <div class="aviso">
+        Aqui você cria treinos, exclui treinos criados e limpa o ranking. O aluno não vê esta tela.
+      </div>
+
+      <div class="botoes">
+        <button onclick="abrirCriador()">Criar treino</button>
+        <button class="btn-perigo" onclick="limparRanking()">Limpar ranking</button>
+        <button class="btn-secundario" onclick="voltarMenu()">Sair</button>
+      </div>
+
+      <div class="separador"></div>
+
+      <h3>Treinos criados</h3>
+      <div class="lista-treinos" id="listaTreinosProfessor"></div>
+
+      <div class="separador"></div>
+
+      <div class="ranking-lista" id="rankingListaProfessor"></div>
+    </div>
+
+    <div class="card" id="telaAluno" style="display:none;">
       <h2>Entrar no treino</h2>
 
       <label>Nome do aluno</label>
@@ -374,14 +432,10 @@
 
       <div class="botoes">
         <button onclick="iniciarTreino()">Começar treino</button>
-        <button class="btn-secundario" onclick="abrirCriador()">Criar treino</button>
+        <button class="btn-secundario" onclick="voltarMenu()">Voltar</button>
       </div>
 
-      <div class="ranking-lista" id="rankingLista"></div>
-
-      <div class="botoes">
-        <button class="btn-perigo" onclick="limparRanking()">Limpar ranking</button>
-      </div>
+      <div class="ranking-lista" id="rankingListaAluno"></div>
     </div>
 
     <div class="card" id="telaCriador" style="display:none;">
@@ -420,13 +474,8 @@
 
       <div class="botoes">
         <button onclick="salvarTreinoNovo()">Salvar treino</button>
-        <button class="btn-secundario" onclick="voltarInicio()">Voltar</button>
+        <button class="btn-secundario" onclick="abrirProfessor()">Voltar ao professor</button>
       </div>
-
-      <div class="separador"></div>
-
-      <h3>Treinos criados</h3>
-      <div class="lista-treinos" id="listaTreinosCriados"></div>
     </div>
 
     <div class="card" id="telaTreino" style="display:none;">
@@ -481,12 +530,14 @@
 
       <div class="botoes">
         <button onclick="reiniciar()">Novo treino</button>
+        <button class="btn-secundario" onclick="voltarMenu()">Menu inicial</button>
       </div>
     </div>
 
   </div>
 
   <script>
+    const senhaProfessorCorreta = "ffit2026";
     const imagemPadrao = "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=900&q=80";
 
     const treinosPadrao = [
@@ -536,6 +587,65 @@
     let grafico = null;
     let exerciciosNovoTreino = [];
     let youtubeAtual = "";
+
+    function esconderTelas() {
+      const telas = [
+        "telaMenu",
+        "telaLoginProfessor",
+        "telaProfessor",
+        "telaAluno",
+        "telaCriador",
+        "telaTreino",
+        "telaFinal"
+      ];
+
+      telas.forEach(id => {
+        document.getElementById(id).style.display = "none";
+      });
+    }
+
+    function voltarMenu() {
+      document.getElementById("videoExercicio").src = "";
+      esconderTelas();
+      document.getElementById("telaMenu").style.display = "block";
+    }
+
+    function abrirAreaAluno() {
+      esconderTelas();
+      document.getElementById("telaAluno").style.display = "block";
+      carregarSelectTreinos();
+      mostrarRanking();
+    }
+
+    function abrirLoginProfessor() {
+      esconderTelas();
+      document.getElementById("senhaProfessor").value = "";
+      document.getElementById("telaLoginProfessor").style.display = "block";
+    }
+
+    function entrarProfessor() {
+      const senha = document.getElementById("senhaProfessor").value;
+
+      if (senha !== senhaProfessorCorreta) {
+        alert("Senha incorreta.");
+        return;
+      }
+
+      abrirProfessor();
+    }
+
+    function abrirProfessor() {
+      esconderTelas();
+      document.getElementById("telaProfessor").style.display = "block";
+      atualizarListaTreinosProfessor();
+      mostrarRanking();
+    }
+
+    function abrirCriador() {
+      esconderTelas();
+      document.getElementById("telaCriador").style.display = "block";
+      atualizarListaExerciciosNovo();
+    }
 
     function obterTreinosCriados() {
       return JSON.parse(localStorage.getItem("treinosFFIT")) || [];
@@ -657,11 +767,8 @@
       pontos = 0;
       historico = [];
 
-      document.getElementById("telaInicial").style.display = "none";
-      document.getElementById("telaCriador").style.display = "none";
+      esconderTelas();
       document.getElementById("telaTreino").style.display = "block";
-      document.getElementById("telaFinal").style.display = "none";
-
       document.getElementById("alunoAtual").innerText = aluno;
 
       carregarExercicio();
@@ -685,6 +792,10 @@
       const imgEl = document.getElementById("imagemExercicio");
       const videoBox = document.getElementById("videoBox");
       const videoEl = document.getElementById("videoExercicio");
+
+      imgEl.onerror = function () {
+        imgEl.style.display = "none";
+      };
 
       if (imagem && imagem.trim() !== "") {
         imgEl.src = imagem;
@@ -786,7 +897,7 @@
     function finalizarTreino() {
       salvarRanking();
 
-      document.getElementById("telaTreino").style.display = "none";
+      esconderTelas();
       document.getElementById("telaFinal").style.display = "block";
 
       document.getElementById("alunoFinal").innerText = aluno;
@@ -813,28 +924,34 @@
 
     function mostrarRanking() {
       const ranking = JSON.parse(localStorage.getItem("rankingFFIT")) || [];
-      const div = document.getElementById("rankingLista");
+      const divs = [
+        document.getElementById("rankingListaAluno"),
+        document.getElementById("rankingListaProfessor")
+      ];
+
+      let html = "";
 
       if (ranking.length === 0) {
-        div.innerHTML = "<h3>🏆 Ranking</h3><p class='texto-central'>Nenhum aluno pontuou ainda.</p>";
-        return;
+        html = "<h3>🏆 Ranking</h3><p class='texto-central'>Nenhum aluno pontuou ainda.</p>";
+      } else {
+        html = "<h3>🏆 Ranking</h3>";
+
+        ranking
+          .sort((a, b) => b.pontos - a.pontos)
+          .slice(0, 10)
+          .forEach((item, index) => {
+            html += `
+              <div class="ranking-item">
+                <span>${index + 1}º ${item.nome}</span>
+                <strong>${item.pontos} pts</strong>
+              </div>
+            `;
+          });
       }
 
-      let html = "<h3>🏆 Ranking</h3>";
-
-      ranking
-        .sort((a, b) => b.pontos - a.pontos)
-        .slice(0, 10)
-        .forEach((item, index) => {
-          html += `
-            <div class="ranking-item">
-              <span>${index + 1}º ${item.nome}</span>
-              <strong>${item.pontos} pts</strong>
-            </div>
-          `;
-        });
-
-      div.innerHTML = html;
+      divs.forEach(div => {
+        if (div) div.innerHTML = html;
+      });
     }
 
     function limparRanking() {
@@ -895,36 +1012,13 @@
 
     function trocarAluno() {
       document.getElementById("videoExercicio").src = "";
-      document.getElementById("telaTreino").style.display = "none";
-      document.getElementById("telaInicial").style.display = "block";
-      mostrarRanking();
-      carregarSelectTreinos();
+      abrirAreaAluno();
     }
 
     function reiniciar() {
       document.getElementById("videoExercicio").src = "";
       document.getElementById("nomeAluno").value = "";
-      document.getElementById("telaFinal").style.display = "none";
-      document.getElementById("telaInicial").style.display = "block";
-      mostrarRanking();
-      carregarSelectTreinos();
-    }
-
-    function abrirCriador() {
-      document.getElementById("telaInicial").style.display = "none";
-      document.getElementById("telaCriador").style.display = "block";
-      document.getElementById("telaTreino").style.display = "none";
-      document.getElementById("telaFinal").style.display = "none";
-
-      atualizarListaExerciciosNovo();
-      atualizarListaTreinosCriados();
-    }
-
-    function voltarInicio() {
-      document.getElementById("telaCriador").style.display = "none";
-      document.getElementById("telaInicial").style.display = "block";
-      carregarSelectTreinos();
-      mostrarRanking();
+      abrirAreaAluno();
     }
 
     function adicionarExercicioNoTreino() {
@@ -1030,17 +1124,17 @@
       exerciciosNovoTreino = [];
 
       atualizarListaExerciciosNovo();
-      atualizarListaTreinosCriados();
       carregarSelectTreinos();
+      atualizarListaTreinosProfessor();
 
-      alert("Treino salvo com sucesso. Agora ele aparece na tela inicial.");
+      alert("Treino salvo com sucesso.");
 
-      voltarInicio();
+      abrirProfessor();
     }
 
-    function atualizarListaTreinosCriados() {
+    function atualizarListaTreinosProfessor() {
       const treinos = obterTreinosCriados();
-      const div = document.getElementById("listaTreinosCriados");
+      const div = document.getElementById("listaTreinosProfessor");
 
       if (treinos.length === 0) {
         div.innerHTML = "<p class='texto-central'>Nenhum treino criado ainda.</p>";
@@ -1072,12 +1166,11 @@
       treinos.splice(index, 1);
       salvarTreinosCriados(treinos);
 
-      atualizarListaTreinosCriados();
+      atualizarListaTreinosProfessor();
       carregarSelectTreinos();
     }
 
-    carregarSelectTreinos();
-    mostrarRanking();
+    voltarMenu();
   </script>
 
 </body>
