@@ -130,10 +130,6 @@
       flex-wrap: wrap;
     }
 
-    .centralizado {
-      text-align: center;
-    }
-
     .info-aluno {
       text-align: center;
       margin-bottom: 18px;
@@ -165,9 +161,16 @@
       font-size: 23px;
       font-weight: 900;
       text-align: center;
-      margin-bottom: 16px;
+      margin-bottom: 8px;
       color: #fff;
       text-transform: uppercase;
+    }
+
+    .exercicio-detalhe {
+      text-align: center;
+      color: #ddd;
+      font-size: 16px;
+      margin-bottom: 16px;
     }
 
     .serie {
@@ -181,6 +184,14 @@
       margin-bottom: 10px;
     }
 
+    .serie span {
+      line-height: 1.4;
+    }
+
+    .serie small {
+      color: #bbb;
+    }
+
     .check {
       width: 42px;
       height: 42px;
@@ -191,6 +202,7 @@
       justify-content: center;
       font-size: 21px;
       cursor: pointer;
+      flex-shrink: 0;
     }
 
     .check.feito {
@@ -201,10 +213,6 @@
       height: 1px;
       background: #333;
       margin: 26px 0;
-    }
-
-    .historico {
-      margin-top: 20px;
     }
 
     canvas {
@@ -255,15 +263,6 @@
       color: #aaa;
       display: block;
       margin-top: 4px;
-    }
-
-    .tag {
-      background: #e50914;
-      color: #fff;
-      padding: 4px 8px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: bold;
     }
 
     .aviso {
@@ -327,18 +326,23 @@
       <h2>Criar treino</h2>
 
       <div class="aviso">
-        Cadastre o nome do treino, adicione os exercícios e depois clique em salvar.  
-        Exemplo: Treino Andréia - Glúteo.
+        Preencha o exercício, clique em <strong>Adicionar exercício</strong> e só depois clique em <strong>Salvar treino</strong>.
       </div>
 
       <label>Nome do treino</label>
       <input type="text" id="nomeTreinoNovo" placeholder="Ex: Treino Andréia - Glúteo" />
 
       <label>Nome do exercício</label>
-      <input type="text" id="nomeExercicioNovo" placeholder="Ex: ELEVAÇÃO PÉLVICA BARRA" />
+      <input type="text" id="nomeExercicioNovo" placeholder="Ex: SUPINO RETO BARRA" />
 
       <label>Quantidade de séries</label>
-      <input type="number" id="seriesExercicioNovo" placeholder="Ex: 4" min="1" max="10" />
+      <input type="number" id="seriesExercicioNovo" placeholder="Ex: 4" min="1" max="20" />
+
+      <label>Quantidade de repetições</label>
+      <input type="text" id="repsExercicioNovo" placeholder="Ex: 12 ou 10 a 12 ou 15/12/10" />
+
+      <label>Link do vídeo no YouTube</label>
+      <input type="text" id="youtubeExercicioNovo" placeholder="Opcional. Cole aqui o link do YouTube." />
 
       <label>Link da imagem do exercício</label>
       <input type="text" id="imagemExercicioNovo" placeholder="Opcional. Se deixar vazio, usa imagem padrão." />
@@ -373,6 +377,11 @@
       <img id="imagemExercicio" class="exercicio-img" src="" alt="Imagem do exercício" />
 
       <div class="exercicio-nome" id="nomeExercicio"></div>
+      <div class="exercicio-detalhe" id="detalheExercicio"></div>
+
+      <div class="botoes" id="botaoYoutubeArea" style="display:none;">
+        <button onclick="abrirYoutube()">Assistir vídeo do exercício</button>
+      </div>
 
       <div id="seriesContainer"></div>
 
@@ -383,10 +392,8 @@
 
       <div class="separador"></div>
 
-      <div class="historico">
-        <h3>📊 Histórico de evolução</h3>
-        <canvas id="graficoEvolucao"></canvas>
-      </div>
+      <h3>📊 Histórico de evolução</h3>
+      <canvas id="graficoEvolucao"></canvas>
     </div>
 
     <div class="card finalizado" id="telaFinal" style="display:none;">
@@ -413,31 +420,11 @@
         nome: "Treino de Pernas",
         padrao: true,
         exercicios: [
-          {
-            nome: "AGACHAMENTO LIVRE",
-            imagem: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=900&q=80",
-            series: 4
-          },
-          {
-            nome: "LEG PRESS 45",
-            imagem: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&w=900&q=80",
-            series: 4
-          },
-          {
-            nome: "CADEIRA EXTENSORA",
-            imagem: "https://images.unsplash.com/photo-1593079831268-3381b0db4a77?auto=format&fit=crop&w=900&q=80",
-            series: 3
-          },
-          {
-            nome: "CADEIRA FLEXORA",
-            imagem: "https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=900&q=80",
-            series: 3
-          },
-          {
-            nome: "CARDIO",
-            imagem: "https://images.unsplash.com/photo-1538805060514-97d9cc17730c?auto=format&fit=crop&w=900&q=80",
-            series: 1
-          }
+          { nome: "AGACHAMENTO LIVRE", series: 4, reps: "10 a 12", imagem: imagemPadrao, youtube: "" },
+          { nome: "LEG PRESS 45", series: 4, reps: "10 a 12", imagem: imagemPadrao, youtube: "" },
+          { nome: "CADEIRA EXTENSORA", series: 3, reps: "12 a 15", imagem: imagemPadrao, youtube: "" },
+          { nome: "CADEIRA FLEXORA", series: 3, reps: "12 a 15", imagem: imagemPadrao, youtube: "" },
+          { nome: "CARDIO", series: 1, reps: "10 minutos", imagem: imagemPadrao, youtube: "" }
         ]
       },
       {
@@ -445,31 +432,11 @@
         nome: "Treino de Superiores",
         padrao: true,
         exercicios: [
-          {
-            nome: "SUPINO RETO BARRA",
-            imagem: "https://images.unsplash.com/photo-1571019613914-85f342c6a11e?auto=format&fit=crop&w=900&q=80",
-            series: 4
-          },
-          {
-            nome: "PUXADA FRENTE PEGADA NEUTRA",
-            imagem: "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&fit=crop&w=900&q=80",
-            series: 4
-          },
-          {
-            nome: "REMADA BAIXA TRIÂNGULO",
-            imagem: "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?auto=format&fit=crop&w=900&q=80",
-            series: 3
-          },
-          {
-            nome: "DESENVOLVIMENTO COM HALTERES",
-            imagem: "https://images.unsplash.com/photo-1584466977773-e625c37cdd50?auto=format&fit=crop&w=900&q=80",
-            series: 3
-          },
-          {
-            nome: "CARDIO",
-            imagem: "https://images.unsplash.com/photo-1538805060514-97d9cc17730c?auto=format&fit=crop&w=900&q=80",
-            series: 1
-          }
+          { nome: "SUPINO RETO BARRA", series: 4, reps: "8 a 12", imagem: imagemPadrao, youtube: "" },
+          { nome: "PUXADA FRENTE PEGADA NEUTRA", series: 4, reps: "10 a 12", imagem: imagemPadrao, youtube: "" },
+          { nome: "REMADA BAIXA TRIÂNGULO", series: 3, reps: "10 a 12", imagem: imagemPadrao, youtube: "" },
+          { nome: "DESENVOLVIMENTO COM HALTERES", series: 3, reps: "10 a 12", imagem: imagemPadrao, youtube: "" },
+          { nome: "CARDIO", series: 1, reps: "10 minutos", imagem: imagemPadrao, youtube: "" }
         ]
       },
       {
@@ -477,31 +444,11 @@
         nome: "Treino de Glúteo",
         padrao: true,
         exercicios: [
-          {
-            nome: "ELEVAÇÃO PÉLVICA BARRA",
-            imagem: "https://images.unsplash.com/photo-1605296867304-46d5465a13f1?auto=format&fit=crop&w=900&q=80",
-            series: 4
-          },
-          {
-            nome: "CADEIRA ABDUTORA",
-            imagem: "https://images.unsplash.com/photo-1593079831268-3381b0db4a77?auto=format&fit=crop&w=900&q=80",
-            series: 4
-          },
-          {
-            nome: "GLÚTEO CABO JOELHO ESTENDIDO",
-            imagem: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?auto=format&fit=crop&w=900&q=80",
-            series: 3
-          },
-          {
-            nome: "AGACHAMENTO BÚLGARO",
-            imagem: "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=900&q=80",
-            series: 3
-          },
-          {
-            nome: "CARDIO",
-            imagem: "https://images.unsplash.com/photo-1538805060514-97d9cc17730c?auto=format&fit=crop&w=900&q=80",
-            series: 1
-          }
+          { nome: "ELEVAÇÃO PÉLVICA BARRA", series: 4, reps: "10 a 12", imagem: imagemPadrao, youtube: "" },
+          { nome: "CADEIRA ABDUTORA", series: 4, reps: "15 a 20", imagem: imagemPadrao, youtube: "" },
+          { nome: "GLÚTEO CABO JOELHO ESTENDIDO", series: 3, reps: "12 a 15", imagem: imagemPadrao, youtube: "" },
+          { nome: "AGACHAMENTO BÚLGARO", series: 3, reps: "10 a 12", imagem: imagemPadrao, youtube: "" },
+          { nome: "CARDIO", series: 1, reps: "10 minutos", imagem: imagemPadrao, youtube: "" }
         ]
       }
     ];
@@ -513,6 +460,7 @@
     let historico = [];
     let grafico = null;
     let exerciciosNovoTreino = [];
+    let youtubeAtual = "";
 
     function obterTreinosCriados() {
       return JSON.parse(localStorage.getItem("treinosFFIT")) || [];
@@ -584,6 +532,17 @@
       document.getElementById("nomeExercicio").innerText = exercicio.nome;
       document.getElementById("imagemExercicio").src = exercicio.imagem || imagemPadrao;
 
+      const reps = exercicio.reps || "Não informado";
+      document.getElementById("detalheExercicio").innerText = exercicio.series + " séries x " + reps + " repetições";
+
+      youtubeAtual = exercicio.youtube || "";
+
+      if (youtubeAtual !== "") {
+        document.getElementById("botaoYoutubeArea").style.display = "flex";
+      } else {
+        document.getElementById("botaoYoutubeArea").style.display = "none";
+      }
+
       const container = document.getElementById("seriesContainer");
       container.innerHTML = "";
 
@@ -592,11 +551,17 @@
         div.className = "serie";
 
         div.innerHTML = `
-          <span>Série ${i}</span>
+          <span>Série ${i}<br><small>${reps} repetições</small></span>
           <div class="check" onclick="marcarSerie(this)">✓</div>
         `;
 
         container.appendChild(div);
+      }
+    }
+
+    function abrirYoutube() {
+      if (youtubeAtual !== "") {
+        window.open(youtubeAtual, "_blank");
       }
     }
 
@@ -671,7 +636,6 @@
       }
 
       ranking.sort((a, b) => b.pontos - a.pontos);
-
       localStorage.setItem("rankingFFIT", JSON.stringify(ranking));
     }
 
@@ -703,7 +667,6 @@
 
     function limparRanking() {
       const confirmar = confirm("Deseja apagar todo o ranking?");
-
       if (!confirmar) return;
 
       localStorage.removeItem("rankingFFIT");
@@ -793,6 +756,8 @@
     function adicionarExercicioNoTreino() {
       const nome = document.getElementById("nomeExercicioNovo").value.trim().toUpperCase();
       const series = Number(document.getElementById("seriesExercicioNovo").value);
+      const reps = document.getElementById("repsExercicioNovo").value.trim();
+      const youtube = document.getElementById("youtubeExercicioNovo").value.trim();
       const imagem = document.getElementById("imagemExercicioNovo").value.trim();
 
       if (nome === "") {
@@ -805,14 +770,23 @@
         return;
       }
 
+      if (reps === "") {
+        alert("Digite a quantidade de repetições.");
+        return;
+      }
+
       exerciciosNovoTreino.push({
         nome: nome,
         series: series,
+        reps: reps,
+        youtube: youtube,
         imagem: imagem || imagemPadrao
       });
 
       document.getElementById("nomeExercicioNovo").value = "";
       document.getElementById("seriesExercicioNovo").value = "";
+      document.getElementById("repsExercicioNovo").value = "";
+      document.getElementById("youtubeExercicioNovo").value = "";
       document.getElementById("imagemExercicioNovo").value = "";
 
       atualizarListaExerciciosNovo();
@@ -836,7 +810,8 @@
           <div class="exercicio-item">
             <div>
               <strong>${index + 1}. ${exercicio.nome}</strong>
-              <small>${exercicio.series} séries</small>
+              <small>${exercicio.series} séries x ${exercicio.reps} reps</small>
+              ${exercicio.youtube ? "<small>Vídeo cadastrado</small>" : ""}
             </div>
             <button class="btn-perigo" onclick="removerExercicioNovo(${index})">Remover</button>
           </div>
@@ -860,7 +835,7 @@
       }
 
       if (exerciciosNovoTreino.length === 0) {
-        alert("Adicione pelo menos um exercício.");
+        alert("Adicione pelo menos um exercício antes de salvar o treino.");
         return;
       }
 
@@ -883,7 +858,9 @@
       atualizarListaTreinosCriados();
       carregarSelectTreinos();
 
-      alert("Treino salvo com sucesso.");
+      alert("Treino salvo com sucesso. Agora ele aparece na tela inicial.");
+
+      voltarInicio();
     }
 
     function atualizarListaTreinosCriados() {
