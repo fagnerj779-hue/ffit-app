@@ -1,146 +1,619 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>FFIT Treino</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FFIT Treino</title>
 
-<style>
-body {
-  margin: 0;
-  font-family: Arial;
-  background: #0b0b0b;
-  color: white;
-}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-.header {
-  background: #111;
-  padding: 15px;
-  text-align: center;
-  font-size: 20px;
-  font-weight: bold;
-  color: red;
-}
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, Helvetica, sans-serif;
+    }
 
-.container {
-  padding: 15px;
-}
+    body {
+      margin: 0;
+      background: #0b0b0b;
+      color: #fff;
+    }
 
-.card {
-  background: #1a1a1a;
-  border-radius: 12px;
-  padding: 15px;
-  margin-bottom: 15px;
-}
+    .topo {
+      background: linear-gradient(135deg, #000, #1a1a1a);
+      padding: 28px 16px;
+      text-align: center;
+      border-bottom: 3px solid #e50914;
+    }
 
-button {
-  background: red;
-  border: none;
-  color: white;
-  padding: 10px;
-  width: 100%;
-  border-radius: 8px;
-  font-weight: bold;
-}
+    .logo {
+      font-size: 36px;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: 1px;
+    }
 
-.serie {
-  display: flex;
-  justify-content: space-between;
-  margin: 8px 0;
-}
+    .logo span {
+      color: #e50914;
+    }
 
-.done {
-  text-decoration: line-through;
-  color: #777;
-}
+    .subtitulo {
+      margin-top: 6px;
+      color: #ccc;
+      font-size: 15px;
+    }
 
-video {
-  width: 100%;
-  border-radius: 10px;
-  margin-top: 10px;
-}
-</style>
+    .container {
+      max-width: 520px;
+      margin: 25px auto;
+      padding: 0 16px 40px;
+    }
 
+    .card {
+      background: #151515;
+      border: 1px solid #292929;
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 0 20px rgba(229, 9, 20, 0.18);
+    }
+
+    h1, h2, h3 {
+      margin-top: 0;
+      text-align: center;
+    }
+
+    h2 {
+      color: #fff;
+      font-size: 24px;
+    }
+
+    .vermelho {
+      color: #e50914;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 14px;
+      margin: 8px 0 14px;
+      border-radius: 10px;
+      border: 1px solid #333;
+      background: #0f0f0f;
+      color: #fff;
+      font-size: 16px;
+    }
+
+    button {
+      background: #e50914;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 13px 18px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #ff1a25;
+      transform: scale(1.02);
+    }
+
+    .btn-secundario {
+      background: #333;
+    }
+
+    .btn-secundario:hover {
+      background: #444;
+    }
+
+    .centralizado {
+      text-align: center;
+    }
+
+    .info-aluno {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .nome-aluno {
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .ranking {
+      margin-top: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #f5c542;
+    }
+
+    .exercicio-img {
+      width: 100%;
+      max-height: 240px;
+      object-fit: cover;
+      border-radius: 16px;
+      border: 2px solid #e50914;
+      margin: 15px 0;
+      background: #222;
+    }
+
+    .exercicio-nome {
+      font-size: 22px;
+      font-weight: 900;
+      text-align: center;
+      margin-bottom: 16px;
+      color: #fff;
+    }
+
+    .serie {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0f0f0f;
+      border: 1px solid #2c2c2c;
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+
+    .serie span {
+      font-size: 16px;
+    }
+
+    .check {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 21px;
+      cursor: pointer;
+    }
+
+    .check.feito {
+      background: #e50914;
+    }
+
+    .botoes {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+
+    .separador {
+      height: 1px;
+      background: #333;
+      margin: 28px 0;
+    }
+
+    .historico {
+      margin-top: 25px;
+    }
+
+    canvas {
+      background: #fff;
+      border-radius: 14px;
+      padding: 10px;
+      margin-top: 12px;
+    }
+
+    .finalizado {
+      text-align: center;
+      padding: 25px;
+    }
+
+    .trofeu {
+      font-size: 56px;
+    }
+
+    .ranking-lista {
+      margin-top: 20px;
+      background: #0f0f0f;
+      border-radius: 14px;
+      padding: 15px;
+      border: 1px solid #333;
+    }
+
+    .ranking-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #292929;
+    }
+
+    .ranking-item:last-child {
+      border-bottom: none;
+    }
+
+    @media (max-width: 600px) {
+      .logo {
+        font-size: 30px;
+      }
+
+      .container {
+        margin-top: 15px;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-<div class="header">FFIT TREINO</div>
+  <div class="topo">
+    <div class="logo">FFIT <span>Treino</span></div>
+    <div class="subtitulo">Sistema de treino, pontos e evolução</div>
+  </div>
 
-<div class="container">
+  <div class="container">
+    <div class="card" id="telaInicial">
+      <h2>Entrar no treino</h2>
 
-<div class="card">
-<h3 id="nome"></h3>
-<video id="video" autoplay loop muted></video>
+      <label>Nome do aluno</label>
+      <input type="text" id="nomeAluno" placeholder="Digite o nome do aluno" />
 
-<div id="series"></div>
+      <label>Escolha o treino</label>
+      <select id="tipoTreino">
+        <option value="perna">Treino de Pernas</option>
+        <option value="superior">Treino de Superiores</option>
+        <option value="gluteo">Treino de Glúteo</option>
+      </select>
 
-<button onclick="proximo()">Próximo exercício</button>
+      <div class="centralizado">
+        <button onclick="iniciarTreino()">Começar treino</button>
+      </div>
 
-<p id="timer"></p>
-</div>
+      <div class="ranking-lista" id="rankingLista"></div>
+    </div>
 
-</div>
+    <div class="card" id="telaTreino" style="display:none;">
+      <div class="info-aluno">
+        <div class="nome-aluno">Aluno: <span id="alunoAtual"></span></div>
+        <button class="btn-secundario" style="margin-top:12px;" onclick="trocarAluno()">Trocar aluno</button>
+        <div class="ranking">🏆 Posição: <span id="posicaoAluno">1</span> | Pontos: <span id="pontosAluno">0</span></div>
+      </div>
 
-<script>
+      <img id="imagemExercicio" class="exercicio-img" src="" alt="Imagem do exercício" />
 
-let exercicios = [
-  {nome:"AGACHAMENTO LIVRE",video:"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"},
-  {nome:"LEG PRESS 45",video:"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"}
-];
+      <div class="exercicio-nome" id="nomeExercicio"></div>
 
-let atual = 0;
+      <div id="seriesContainer"></div>
 
-function carregar(){
-  document.getElementById("nome").innerText = exercicios[atual].nome;
-  document.getElementById("video").src = exercicios[atual].video;
+      <div class="botoes">
+        <button onclick="proximoExercicio()">Próximo exercício</button>
+        <button class="btn-secundario" onclick="voltarExercicio()">Voltar</button>
+      </div>
 
-  let div = document.getElementById("series");
-  div.innerHTML = "";
+      <div class="separador"></div>
 
-  for(let i=1;i<=3;i++){
-    let s = document.createElement("div");
-    s.className = "serie";
+      <div class="historico">
+        <h3>📊 Histórico de evolução</h3>
+        <canvas id="graficoEvolucao"></canvas>
+      </div>
+    </div>
 
-    let txt = document.createElement("span");
-    txt.innerText = "Série " + i;
+    <div class="card finalizado" id="telaFinal" style="display:none;">
+      <div class="trofeu">🏆</div>
+      <h2>Treino finalizado!</h2>
+      <p>Parabéns, <strong id="alunoFinal"></strong>!</p>
+      <p>Você concluiu o treino e somou pontos no ranking.</p>
 
-    let btn = document.createElement("button");
-    btn.innerText = "✔";
+      <h3 class="vermelho">Pontuação final: <span id="pontuacaoFinal"></span></h3>
 
-    btn.onclick = ()=>{
-      txt.classList.add("done");
-      iniciarTimer();
+      <button onclick="reiniciar()">Novo treino</button>
+    </div>
+  </div>
+
+  <script>
+    const treinos = {
+      perna: [
+        {
+          nome: "AGACHAMENTO LIVRE",
+          imagem: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=900&q=80",
+          series: 4
+        },
+        {
+          nome: "LEG PRESS 45",
+          imagem: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&w=900&q=80",
+          series: 4
+        },
+        {
+          nome: "CADEIRA EXTENSORA",
+          imagem: "https://images.unsplash.com/photo-1593079831268-3381b0db4a77?auto=format&fit=crop&w=900&q=80",
+          series: 3
+        },
+        {
+          nome: "CADEIRA FLEXORA",
+          imagem: "https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=900&q=80",
+          series: 3
+        },
+        {
+          nome: "CARDIO",
+          imagem: "https://images.unsplash.com/photo-1538805060514-97d9cc17730c?auto=format&fit=crop&w=900&q=80",
+          series: 1
+        }
+      ],
+
+      superior: [
+        {
+          nome: "SUPINO RETO BARRA",
+          imagem: "https://images.unsplash.com/photo-1571019613914-85f342c6a11e?auto=format&fit=crop&w=900&q=80",
+          series: 4
+        },
+        {
+          nome: "PUXADA FRENTE PEGADA NEUTRA",
+          imagem: "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&fit=crop&w=900&q=80",
+          series: 4
+        },
+        {
+          nome: "REMADA BAIXA TRIÂNGULO",
+          imagem: "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?auto=format&fit=crop&w=900&q=80",
+          series: 3
+        },
+        {
+          nome: "DESENVOLVIMENTO COM HALTERES",
+          imagem: "https://images.unsplash.com/photo-1584466977773-e625c37cdd50?auto=format&fit=crop&w=900&q=80",
+          series: 3
+        },
+        {
+          nome: "CARDIO",
+          imagem: "https://images.unsplash.com/photo-1538805060514-97d9cc17730c?auto=format&fit=crop&w=900&q=80",
+          series: 1
+        }
+      ],
+
+      gluteo: [
+        {
+          nome: "ELEVAÇÃO PÉLVICA BARRA",
+          imagem: "https://images.unsplash.com/photo-1605296867304-46d5465a13f1?auto=format&fit=crop&w=900&q=80",
+          series: 4
+        },
+        {
+          nome: "CADEIRA ABDUTORA",
+          imagem: "https://images.unsplash.com/photo-1593079831268-3381b0db4a77?auto=format&fit=crop&w=900&q=80",
+          series: 4
+        },
+        {
+          nome: "GLÚTEO CABO JOELHO ESTENDIDO",
+          imagem: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?auto=format&fit=crop&w=900&q=80",
+          series: 3
+        },
+        {
+          nome: "AGACHAMENTO BÚLGARO",
+          imagem: "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=900&q=80",
+          series: 3
+        },
+        {
+          nome: "CARDIO",
+          imagem: "https://images.unsplash.com/photo-1538805060514-97d9cc17730c?auto=format&fit=crop&w=900&q=80",
+          series: 1
+        }
+      ]
     };
 
-    s.appendChild(txt);
-    s.appendChild(btn);
-    div.appendChild(s);
-  }
-}
+    let aluno = "";
+    let treinoSelecionado = [];
+    let exercicioAtual = 0;
+    let pontos = 0;
+    let historico = [];
+    let grafico = null;
 
-function iniciarTimer(){
-  let tempo = 60;
-  let i = setInterval(()=>{
-    document.getElementById("timer").innerText = "Descanso: " + tempo;
-    tempo--;
-    if(tempo < 0){
-      clearInterval(i);
+    function iniciarTreino() {
+      aluno = document.getElementById("nomeAluno").value.trim();
+
+      if (aluno === "") {
+        alert("Digite o nome do aluno.");
+        return;
+      }
+
+      const tipo = document.getElementById("tipoTreino").value;
+      treinoSelecionado = treinos[tipo];
+
+      exercicioAtual = 0;
+      pontos = 0;
+      historico = [];
+
+      document.getElementById("telaInicial").style.display = "none";
+      document.getElementById("telaTreino").style.display = "block";
+      document.getElementById("telaFinal").style.display = "none";
+
+      document.getElementById("alunoAtual").innerText = aluno;
+
+      carregarExercicio();
+      atualizarPontos();
     }
-  },1000);
-}
 
-function proximo(){
-  atual++;
-  if(atual >= exercicios.length){
-    alert("Treino finalizado 🔥");
-    atual = 0;
-  }
-  carregar();
-}
+    function carregarExercicio() {
+      const exercicio = treinoSelecionado[exercicioAtual];
 
-carregar();
+      document.getElementById("nomeExercicio").innerText = exercicio.nome;
+      document.getElementById("imagemExercicio").src = exercicio.imagem;
 
-</script>
+      const container = document.getElementById("seriesContainer");
+      container.innerHTML = "";
+
+      for (let i = 1; i <= exercicio.series; i++) {
+        const div = document.createElement("div");
+        div.className = "serie";
+
+        div.innerHTML = `
+          <span>Série ${i}</span>
+          <div class="check" onclick="marcarSerie(this)">✓</div>
+        `;
+
+        container.appendChild(div);
+      }
+    }
+
+    function marcarSerie(elemento) {
+      if (!elemento.classList.contains("feito")) {
+        elemento.classList.add("feito");
+        pontos += 10;
+        historico.push(pontos);
+      } else {
+        elemento.classList.remove("feito");
+        pontos -= 10;
+        if (pontos < 0) pontos = 0;
+        historico.push(pontos);
+      }
+
+      atualizarPontos();
+      atualizarGrafico();
+    }
+
+    function proximoExercicio() {
+      if (exercicioAtual < treinoSelecionado.length - 1) {
+        exercicioAtual++;
+        carregarExercicio();
+      } else {
+        finalizarTreino();
+      }
+    }
+
+    function voltarExercicio() {
+      if (exercicioAtual > 0) {
+        exercicioAtual--;
+        carregarExercicio();
+      }
+    }
+
+    function atualizarPontos() {
+      document.getElementById("pontosAluno").innerText = pontos;
+
+      const ranking = JSON.parse(localStorage.getItem("rankingFFIT")) || [];
+
+      ranking.sort((a, b) => b.pontos - a.pontos);
+
+      let posicao = ranking.findIndex(item => item.nome.toLowerCase() === aluno.toLowerCase()) + 1;
+
+      if (posicao === 0) {
+        posicao = ranking.length + 1;
+      }
+
+      document.getElementById("posicaoAluno").innerText = posicao;
+    }
+
+    function finalizarTreino() {
+      salvarRanking();
+
+      document.getElementById("telaTreino").style.display = "none";
+      document.getElementById("telaFinal").style.display = "block";
+
+      document.getElementById("alunoFinal").innerText = aluno;
+      document.getElementById("pontuacaoFinal").innerText = pontos;
+    }
+
+    function salvarRanking() {
+      let ranking = JSON.parse(localStorage.getItem("rankingFFIT")) || [];
+
+      const alunoExistente = ranking.find(item => item.nome.toLowerCase() === aluno.toLowerCase());
+
+      if (alunoExistente) {
+        alunoExistente.pontos += pontos;
+      } else {
+        ranking.push({
+          nome: aluno,
+          pontos: pontos
+        });
+      }
+
+      ranking.sort((a, b) => b.pontos - a.pontos);
+
+      localStorage.setItem("rankingFFIT", JSON.stringify(ranking));
+    }
+
+    function mostrarRanking() {
+      const ranking = JSON.parse(localStorage.getItem("rankingFFIT")) || [];
+      const div = document.getElementById("rankingLista");
+
+      if (ranking.length === 0) {
+        div.innerHTML = "<h3>🏆 Ranking</h3><p style='text-align:center;color:#aaa;'>Nenhum aluno pontuou ainda.</p>";
+        return;
+      }
+
+      let html = "<h3>🏆 Ranking</h3>";
+
+      ranking
+        .sort((a, b) => b.pontos - a.pontos)
+        .slice(0, 5)
+        .forEach((item, index) => {
+          html += `
+            <div class="ranking-item">
+              <span>${index + 1}º ${item.nome}</span>
+              <strong>${item.pontos} pts</strong>
+            </div>
+          `;
+        });
+
+      div.innerHTML = html;
+    }
+
+    function atualizarGrafico() {
+      const ctx = document.getElementById("graficoEvolucao").getContext("2d");
+
+      if (grafico) {
+        grafico.destroy();
+      }
+
+      grafico = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: historico.map((_, i) => i + 1),
+          datasets: [{
+            label: "Evolução",
+            data: historico,
+            borderColor: "#e50914",
+            backgroundColor: "rgba(229, 9, 20, 0.15)",
+            borderWidth: 3,
+            tension: 0.3,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              labels: {
+                color: "#111"
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                color: "#111"
+              }
+            },
+            x: {
+              ticks: {
+                color: "#111"
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function trocarAluno() {
+      document.getElementById("telaTreino").style.display = "none";
+      document.getElementById("telaInicial").style.display = "block";
+      mostrarRanking();
+    }
+
+    function reiniciar() {
+      document.getElementById("nomeAluno").value = "";
+      document.getElementById("telaFinal").style.display = "none";
+      document.getElementById("telaInicial").style.display = "block";
+      mostrarRanking();
+    }
+
+    mostrarRanking();
+  </script>
 
 </body>
 </html>
