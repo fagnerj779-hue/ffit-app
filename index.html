@@ -640,7 +640,7 @@
       <input type="hidden" id="nomeAluno" />
 
       <div id="avisoLinkAluno" class="aviso" style="display:none;">
-        Acesso individual não identificado. Use um link assim: <strong>?aluno=andreia</strong>
+        Acesso individual não identificado. O melhor é o professor copiar o link do treino e enviar pelo WhatsApp.
       </div>
 
       <h3>Treino semanal</h3>
@@ -808,6 +808,7 @@
     let youtubeAtual = "";
     let modoEdicao = false;
     let indiceTreinoEditando = null;
+    let treinoLinkAtual = null;
 
 
     const diasSemanaTreino = [
@@ -844,6 +845,99 @@
       return normalizarNomeAluno(params.get("aluno") || params.get("nome") || "");
     }
 
+    function codificarTreinoParaLink(treino) {
+      const texto = JSON.stringify(treino);
+      return btoa(unescape(encodeURIComponent(texto)));
+    }
+
+    function decodificarTreinoDoLink(codigo) {
+      const texto = decodeURIComponent(escape(atob(codigo)));
+      return JSON.parse(texto);
+    }
+
+    function pegarTreinoDoLink() {
+      const params = new URLSearchParams(window.location.search);
+      const dados = params.get("dados");
+
+      if (!dados) return null;
+
+      try {
+        const treino = decodificarTreinoDoLink(dados);
+
+        if (!treino || !treino.nome || !Array.isArray(treino.exercicios)) {
+          return null;
+        }
+
+        return treino;
+      } catch (erro) {
+        alert("Link de treino inválido. Gere um novo link na área do professor.");
+        return null;
+      }
+    }
+
+    function extrairAlunoPeloNomeDoTreino(nomeTreino) {
+      const nome = (nomeTreino || "").trim();
+
+      if (!nome) return "aluno";
+
+      let parteAluno = nome;
+
+      if (nome.includes(" - ")) {
+        parteAluno = nome.split(" - ")[0];
+      }
+
+      parteAluno = parteAluno
+        .replace(/^treino\s+/i, "")
+        .replace(/^aluno\s+/i, "")
+        .trim();
+
+      return normalizarNomeAluno(parteAluno || "aluno");
+    }
+
+    function gerarLinkTreino(treino) {
+      const base = window.location.origin && window.location.origin !== "null"
+        ? window.location.origin + window.location.pathname
+        : window.location.href.split("?")[0];
+
+      const codigo = codificarTreinoParaLink(treino);
+      return base + "?dados=" + encodeURIComponent(codigo);
+    }
+
+    function copiarTexto(texto) {
+      if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(texto);
+      }
+
+      const input = document.createElement("textarea");
+      input.value = texto;
+      input.style.position = "fixed";
+      input.style.left = "-9999px";
+      document.body.appendChild(input);
+      input.focus();
+      input.select();
+      document.execCommand("copy");
+      document.body.removeChild(input);
+      return Promise.resolve();
+    }
+
+    function copiarLinkTreinoCriado(index) {
+      const treinos = obterTreinosCriados();
+      const treino = treinos[index];
+
+      if (!treino) {
+        alert("Treino não encontrado.");
+        return;
+      }
+
+      const link = gerarLinkTreino(treino);
+
+      copiarTexto(link).then(() => {
+        alert("Link do treino copiado. Agora é só enviar para o aluno no WhatsApp.");
+      }).catch(() => {
+        prompt("Copie o link do treino:", link);
+      });
+    }
+
     function esconderTelas() {
       const telas = [
         "telaMenu",
@@ -871,6 +965,37 @@
     function abrirAreaAluno() {
       esconderTelas();
       document.getElementById("telaAluno").style.display = "block";
+
+      treinoLinkAtual = pegarTreinoDoLink();
+
+      if (treinoLinkAtual) {
+        aluno = extrairAlunoPeloNomeDoTreino(treinoLinkAtual.nome);
+        document.getElementById("nomeAluno").value = aluno;
+        document.getElementById("nomeAlunoAutomatico").innerText = formatarNomeAluno(aluno);
+        document.getElementById("boxAlunoIdentificado").style.display = "block";
+        document.getElementById("avisoLinkAluno").style.display = "none";
+
+        const select = document.getElementById("tipoTreino");
+        select.innerHTML = "";
+        const option = document.createElement("option");
+        option.value = "treino_link";
+        option.innerText = treinoLinkAtual.nome;
+        select.appendChild(option);
+
+        document.getElementById("semanaTreinoAluno").innerHTML = `
+          <div class="dia-card hoje">
+            <div>
+              <strong>Treino liberado pelo professor <span class="badge-hoje">LINK</span></strong>
+              <small>${treinoLinkAtual.nome}</small>
+            </div>
+            <button class="btn-pequeno" onclick="iniciarTreino()">Abrir</button>
+          </div>
+        `;
+
+        mostrarRanking();
+        return;
+      }
+
       carregarSelectTreinos();
 
       aluno = pegarAlunoDaURL();
@@ -1279,17 +1404,24 @@
     }
 
     function iniciarTreino() {
-      aluno = pegarAlunoDaURL() || document.getElementById("nomeAluno").value.trim();
+      const treinoDoLink = treinoLinkAtual || pegarTreinoDoLink();
+      let treino = null;
 
-      if (aluno === "") {
-        alert("Aluno não identificado. Abra pelo link individual do aluno, exemplo: ?aluno=andreia");
-        return;
+      if (treinoDoLink) {
+        treino = treinoDoLink;
+        aluno = extrairAlunoPeloNomeDoTreino(treino.nome);
+      } else {
+        aluno = pegarAlunoDaURL() || document.getElementById("nomeAluno").value.trim();
+
+        if (aluno === "") {
+          aluno = "aluno";
+        }
+
+        const idTreino = document.getElementById("tipoTreino").value;
+        treino = obterTodosTreinos().find(item => item.id === idTreino);
       }
 
       document.getElementById("nomeAluno").value = aluno;
-
-      const idTreino = document.getElementById("tipoTreino").value;
-      const treino = obterTodosTreinos().find(item => item.id === idTreino);
 
       if (!treino) {
         alert("Treino não encontrado.");
@@ -1733,6 +1865,7 @@
               <small>${treino.exercicios.length} exercícios cadastrados</small>
             </div>
             <div class="item-acoes">
+              <button class="btn-pequeno" onclick="copiarLinkTreinoCriado(${index})">Copiar link</button>
               <button class="btn-pequeno btn-secundario" onclick="abrirCriadorEdicao(${index})">Editar</button>
               <button class="btn-pequeno btn-perigo" onclick="excluirTreinoCriado(${index})">Excluir</button>
             </div>
@@ -1755,7 +1888,11 @@
       carregarSelectTreinos();
     }
 
-    voltarMenu();
+    if (pegarTreinoDoLink() || pegarAlunoDaURL()) {
+      abrirAreaAluno();
+    } else {
+      voltarMenu();
+    }
   </script>
 
 </body>
