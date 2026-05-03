@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FFIT Treino</title>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
@@ -43,7 +44,7 @@
     }
 
     .container {
-      max-width: 650px;
+      max-width: 700px;
       margin: 25px auto;
       padding: 0 16px 50px;
     }
@@ -119,6 +120,11 @@
 
     .btn-perigo:hover {
       background: #a00000;
+    }
+
+    .btn-pequeno {
+      padding: 9px 12px;
+      font-size: 13px;
     }
 
     .botoes {
@@ -294,7 +300,8 @@
 
     .ranking-lista,
     .lista-exercicios,
-    .lista-treinos {
+    .lista-treinos,
+    .lista-cargas {
       margin-top: 20px;
       background: #0f0f0f;
       border-radius: 14px;
@@ -304,26 +311,36 @@
 
     .ranking-item,
     .exercicio-item,
-    .treino-item {
+    .treino-item,
+    .carga-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 10px;
-      padding: 11px 0;
+      padding: 12px 0;
       border-bottom: 1px solid #292929;
     }
 
     .ranking-item:last-child,
     .exercicio-item:last-child,
-    .treino-item:last-child {
+    .treino-item:last-child,
+    .carga-item:last-child {
       border-bottom: none;
     }
 
     .exercicio-item small,
-    .treino-item small {
+    .treino-item small,
+    .carga-item small {
       color: #aaa;
       display: block;
       margin-top: 4px;
+    }
+
+    .item-acoes {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
     }
 
     .aviso {
@@ -340,6 +357,16 @@
     .texto-central {
       text-align: center;
       color: #aaa;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #333;
+      color: #fff;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 12px;
+      margin-top: 5px;
     }
 
     @media (max-width: 600px) {
@@ -362,6 +389,17 @@
       .carga-linha input,
       .carga-linha button {
         width: 100%;
+      }
+
+      .treino-item,
+      .exercicio-item,
+      .carga-item {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .item-acoes {
+        justify-content: flex-start;
       }
     }
   </style>
@@ -402,11 +440,12 @@
       <h2>Painel do professor</h2>
 
       <div class="aviso">
-        Aqui você cria treinos, exclui treinos criados e limpa o ranking. O aluno não vê esta tela.
+        Aqui você cria, edita e exclui treinos. Também consegue ver cargas salvas e limpar o ranking.
       </div>
 
       <div class="botoes">
-        <button onclick="abrirCriador()">Criar treino</button>
+        <button onclick="abrirCriadorNovo()">Criar treino</button>
+        <button class="btn-secundario" onclick="abrirTelaCargas()">Ver cargas salvas</button>
         <button class="btn-perigo" onclick="limparRanking()">Limpar ranking</button>
         <button class="btn-secundario" onclick="voltarMenu()">Sair</button>
       </div>
@@ -419,6 +458,21 @@
       <div class="separador"></div>
 
       <div class="ranking-lista" id="rankingListaProfessor"></div>
+    </div>
+
+    <div class="card" id="telaCargas" style="display:none;">
+      <h2>Cargas salvas</h2>
+
+      <div class="aviso">
+        Aqui aparecem as cargas salvas pelos alunos durante o treino.
+      </div>
+
+      <div class="lista-cargas" id="listaCargasSalvas"></div>
+
+      <div class="botoes">
+        <button class="btn-perigo" onclick="limparCargas()">Limpar cargas</button>
+        <button class="btn-secundario" onclick="abrirProfessor()">Voltar</button>
+      </div>
     </div>
 
     <div class="card" id="telaAluno" style="display:none;">
@@ -439,7 +493,7 @@
     </div>
 
     <div class="card" id="telaCriador" style="display:none;">
-      <h2>Criar treino</h2>
+      <h2 id="tituloCriador">Criar treino</h2>
 
       <div class="aviso">
         Preencha o exercício, clique em <strong>Adicionar exercício</strong> e só depois clique em <strong>Salvar treino</strong>.
@@ -587,6 +641,8 @@
     let grafico = null;
     let exerciciosNovoTreino = [];
     let youtubeAtual = "";
+    let modoEdicao = false;
+    let indiceTreinoEditando = null;
 
     function esconderTelas() {
       const telas = [
@@ -596,7 +652,8 @@
         "telaAluno",
         "telaCriador",
         "telaTreino",
-        "telaFinal"
+        "telaFinal",
+        "telaCargas"
       ];
 
       telas.forEach(id => {
@@ -641,7 +698,43 @@
       mostrarRanking();
     }
 
-    function abrirCriador() {
+    function abrirTelaCargas() {
+      esconderTelas();
+      document.getElementById("telaCargas").style.display = "block";
+      mostrarCargasSalvas();
+    }
+
+    function abrirCriadorNovo() {
+      modoEdicao = false;
+      indiceTreinoEditando = null;
+      exerciciosNovoTreino = [];
+
+      document.getElementById("tituloCriador").innerText = "Criar treino";
+      document.getElementById("nomeTreinoNovo").value = "";
+      limparCamposExercicio();
+
+      esconderTelas();
+      document.getElementById("telaCriador").style.display = "block";
+      atualizarListaExerciciosNovo();
+    }
+
+    function abrirCriadorEdicao(index) {
+      const treinos = obterTreinosCriados();
+      const treino = treinos[index];
+
+      if (!treino) {
+        alert("Treino não encontrado.");
+        return;
+      }
+
+      modoEdicao = true;
+      indiceTreinoEditando = index;
+      exerciciosNovoTreino = JSON.parse(JSON.stringify(treino.exercicios));
+
+      document.getElementById("tituloCriador").innerText = "Editar treino";
+      document.getElementById("nomeTreinoNovo").value = treino.nome;
+      limparCamposExercicio();
+
       esconderTelas();
       document.getElementById("telaCriador").style.display = "block";
       atualizarListaExerciciosNovo();
@@ -739,6 +832,45 @@
       } else {
         document.getElementById("cargaExercicio").value = "";
       }
+    }
+
+    function mostrarCargasSalvas() {
+      const cargas = obterCargasSalvas();
+      const lista = Object.values(cargas);
+      const div = document.getElementById("listaCargasSalvas");
+
+      if (lista.length === 0) {
+        div.innerHTML = "<p class='texto-central'>Nenhuma carga salva ainda.</p>";
+        return;
+      }
+
+      let html = "";
+
+      lista
+        .sort((a, b) => a.aluno.localeCompare(b.aluno))
+        .forEach(item => {
+          html += `
+            <div class="carga-item">
+              <div>
+                <strong>${item.aluno}</strong>
+                <small>Exercício: ${item.exercicio}</small>
+                <small>Carga: ${item.carga}</small>
+                <small>Data: ${item.data}</small>
+              </div>
+            </div>
+          `;
+        });
+
+      div.innerHTML = html;
+    }
+
+    function limparCargas() {
+      const confirmar = confirm("Deseja apagar todas as cargas salvas?");
+      if (!confirmar) return;
+
+      localStorage.removeItem("cargasFFIT");
+      mostrarCargasSalvas();
+      alert("Cargas apagadas.");
     }
 
     function iniciarTreino() {
@@ -1021,6 +1153,14 @@
       abrirAreaAluno();
     }
 
+    function limparCamposExercicio() {
+      document.getElementById("nomeExercicioNovo").value = "";
+      document.getElementById("seriesExercicioNovo").value = "";
+      document.getElementById("repsExercicioNovo").value = "";
+      document.getElementById("imagemExercicioNovo").value = "";
+      document.getElementById("youtubeExercicioNovo").value = "";
+    }
+
     function adicionarExercicioNoTreino() {
       const nome = document.getElementById("nomeExercicioNovo").value.trim().toUpperCase();
       const series = Number(document.getElementById("seriesExercicioNovo").value);
@@ -1051,12 +1191,7 @@
         youtube: youtube
       });
 
-      document.getElementById("nomeExercicioNovo").value = "";
-      document.getElementById("seriesExercicioNovo").value = "";
-      document.getElementById("repsExercicioNovo").value = "";
-      document.getElementById("imagemExercicioNovo").value = "";
-      document.getElementById("youtubeExercicioNovo").value = "";
-
+      limparCamposExercicio();
       atualizarListaExerciciosNovo();
     }
 
@@ -1082,12 +1217,44 @@
               ${exercicio.imagem ? "<small>GIF/Imagem cadastrado</small>" : ""}
               ${exercicio.youtube ? "<small>Vídeo do YouTube cadastrado</small>" : ""}
             </div>
-            <button class="btn-perigo" onclick="removerExercicioNovo(${index})">Remover</button>
+            <div class="item-acoes">
+              <button class="btn-pequeno btn-secundario" onclick="editarExercicioNovo(${index})">Editar</button>
+              <button class="btn-pequeno btn-perigo" onclick="removerExercicioNovo(${index})">Remover</button>
+            </div>
           </div>
         `;
       });
 
       div.innerHTML = html;
+    }
+
+    function editarExercicioNovo(index) {
+      const exercicio = exerciciosNovoTreino[index];
+
+      const novoNome = prompt("Nome do exercício:", exercicio.nome);
+      if (novoNome === null) return;
+
+      const novasSeries = prompt("Quantidade de séries:", exercicio.series);
+      if (novasSeries === null) return;
+
+      const novasReps = prompt("Quantidade de repetições:", exercicio.reps);
+      if (novasReps === null) return;
+
+      const novaImagem = prompt("Link do GIF ou imagem:", exercicio.imagem || "");
+      if (novaImagem === null) return;
+
+      const novoYoutube = prompt("Link do YouTube:", exercicio.youtube || "");
+      if (novoYoutube === null) return;
+
+      exerciciosNovoTreino[index] = {
+        nome: novoNome.trim().toUpperCase(),
+        series: Number(novasSeries),
+        reps: novasReps.trim(),
+        imagem: novaImagem.trim(),
+        youtube: novoYoutube.trim()
+      };
+
+      atualizarListaExerciciosNovo();
     }
 
     function removerExercicioNovo(index) {
@@ -1110,25 +1277,32 @@
 
       const treinos = obterTreinosCriados();
 
-      const novoTreino = {
-        id: "treino_" + Date.now(),
-        nome: nomeTreino,
-        padrao: false,
-        exercicios: exerciciosNovoTreino
-      };
+      if (modoEdicao && indiceTreinoEditando !== null) {
+        treinos[indiceTreinoEditando].nome = nomeTreino;
+        treinos[indiceTreinoEditando].exercicios = exerciciosNovoTreino;
+        salvarTreinosCriados(treinos);
+        alert("Treino editado com sucesso.");
+      } else {
+        const novoTreino = {
+          id: "treino_" + Date.now(),
+          nome: nomeTreino,
+          padrao: false,
+          exercicios: exerciciosNovoTreino
+        };
 
-      treinos.push(novoTreino);
-      salvarTreinosCriados(treinos);
+        treinos.push(novoTreino);
+        salvarTreinosCriados(treinos);
+        alert("Treino salvo com sucesso.");
+      }
 
-      document.getElementById("nomeTreinoNovo").value = "";
+      modoEdicao = false;
+      indiceTreinoEditando = null;
       exerciciosNovoTreino = [];
+      limparCamposExercicio();
+      document.getElementById("nomeTreinoNovo").value = "";
 
-      atualizarListaExerciciosNovo();
       carregarSelectTreinos();
       atualizarListaTreinosProfessor();
-
-      alert("Treino salvo com sucesso.");
-
       abrirProfessor();
     }
 
@@ -1150,7 +1324,10 @@
               <strong>${treino.nome}</strong>
               <small>${treino.exercicios.length} exercícios cadastrados</small>
             </div>
-            <button class="btn-perigo" onclick="excluirTreinoCriado(${index})">Excluir</button>
+            <div class="item-acoes">
+              <button class="btn-pequeno btn-secundario" onclick="abrirCriadorEdicao(${index})">Editar</button>
+              <button class="btn-pequeno btn-perigo" onclick="excluirTreinoCriado(${index})">Excluir</button>
+            </div>
           </div>
         `;
       });
