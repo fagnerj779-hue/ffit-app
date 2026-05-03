@@ -369,6 +369,103 @@
       margin-top: 5px;
     }
 
+
+
+    .aluno-identidade {
+      background: linear-gradient(135deg, #1f1f1f, #0d0d0d);
+      border: 1px solid rgba(229, 9, 20, 0.45);
+      border-radius: 16px;
+      padding: 16px;
+      text-align: center;
+      margin-bottom: 16px;
+      box-shadow: inset 0 0 18px rgba(229, 9, 20, 0.08);
+    }
+
+    .aluno-identidade small {
+      display: block;
+      color: #aaa;
+      margin-bottom: 5px;
+      font-size: 13px;
+    }
+
+    .aluno-identidade strong {
+      display: block;
+      font-size: 24px;
+      color: #fff;
+      text-transform: capitalize;
+    }
+
+    .semana-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin: 14px 0 20px;
+    }
+
+    .dia-card {
+      background: #0f0f0f;
+      border: 1px solid #2c2c2c;
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .dia-card.hoje {
+      border-color: #e50914;
+      box-shadow: 0 0 18px rgba(229, 9, 20, 0.18);
+    }
+
+    .dia-card strong {
+      display: block;
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .dia-card small {
+      display: block;
+      color: #aaa;
+      line-height: 1.35;
+    }
+
+    .dia-card .badge-hoje {
+      display: inline-block;
+      background: #e50914;
+      color: #fff;
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 11px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    .semana-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .semana-item {
+      background: #0f0f0f;
+      border: 1px solid #333;
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .link-aluno {
+      word-break: break-all;
+      color: #ddd;
+      font-size: 13px;
+      margin-top: 8px;
+      background: #080808;
+      border: 1px solid #333;
+      border-radius: 10px;
+      padding: 10px;
+    }
+
     @media (max-width: 600px) {
       .logo {
         font-size: 30px;
@@ -400,6 +497,15 @@
 
       .item-acoes {
         justify-content: flex-start;
+      }
+
+      .semana-form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .dia-card {
+        align-items: flex-start;
+        flex-direction: column;
       }
     }
   </style>
@@ -444,10 +550,11 @@
       </div>
 
       <div class="botoes">
-       <button onclick="abrirCriador()">Criar treino</button>
-<button class="btn-secundario" onclick="abrirTelaCargas()">Ver cargas salvas</button>
-<button class="btn-perigo" onclick="limparRanking()">Limpar ranking</button>
-<button class="btn-secundario" onclick="voltarMenu()">Sair</button>
+        <button onclick="abrirCriador()">Criar treino</button>
+        <button class="btn-secundario" onclick="abrirTelaSemana()">Montar semana do aluno</button>
+        <button class="btn-secundario" onclick="abrirTelaCargas()">Ver cargas salvas</button>
+        <button class="btn-perigo" onclick="limparRanking()">Limpar ranking</button>
+        <button class="btn-secundario" onclick="voltarMenu()">Sair</button>
       </div>
 
       <div class="separador"></div>
@@ -475,17 +582,75 @@
       </div>
     </div>
 
-    <div class="card" id="telaAluno" style="display:none;">
-      <h2>Entrar no treino</h2>
+    <div class="card" id="telaSemana" style="display:none;">
+      <h2>Montar semana do aluno</h2>
+
+      <div class="aviso">
+        Digite o nome do aluno exatamente como ficará no link individual. Exemplo: andreia, lucas, maria.
+      </div>
 
       <label>Nome do aluno</label>
-      <input type="text" id="nomeAluno" placeholder="Digite o nome do aluno" />
+      <input type="text" id="nomeAlunoSemana" placeholder="Ex: andreia" oninput="carregarSemanaDigitada()" />
 
-      <label>Escolha o treino</label>
+      <div class="semana-form-grid">
+        <div>
+          <label>Segunda-feira</label>
+          <select id="semana_segunda"></select>
+        </div>
+        <div>
+          <label>Terça-feira</label>
+          <select id="semana_terca"></select>
+        </div>
+        <div>
+          <label>Quarta-feira</label>
+          <select id="semana_quarta"></select>
+        </div>
+        <div>
+          <label>Quinta-feira</label>
+          <select id="semana_quinta"></select>
+        </div>
+        <div>
+          <label>Sexta-feira</label>
+          <select id="semana_sexta"></select>
+        </div>
+        <div>
+          <label>Sábado</label>
+          <select id="semana_sabado"></select>
+        </div>
+      </div>
+
+      <div class="botoes">
+        <button onclick="salvarSemanaAluno()">Salvar semana</button>
+        <button class="btn-secundario" onclick="abrirProfessor()">Voltar ao professor</button>
+      </div>
+
+      <div class="separador"></div>
+      <h3>Semanas cadastradas</h3>
+      <div id="listaSemanasProfessor" class="lista-treinos"></div>
+    </div>
+
+    <div class="card" id="telaAluno" style="display:none;">
+      <h2>Área do aluno</h2>
+
+      <div id="boxAlunoIdentificado" class="aluno-identidade">
+        <small>Aluno identificado pelo link individual</small>
+        <strong id="nomeAlunoAutomatico">Aluno</strong>
+      </div>
+
+      <input type="hidden" id="nomeAluno" />
+
+      <div id="avisoLinkAluno" class="aviso" style="display:none;">
+        Acesso individual não identificado. Use um link assim: <strong>?aluno=andreia</strong>
+      </div>
+
+      <h3>Treino semanal</h3>
+      <div id="semanaTreinoAluno" class="semana-grid"></div>
+
+      <label>Escolher outro treino</label>
       <select id="tipoTreino"></select>
 
       <div class="botoes">
-        <button onclick="iniciarTreino()">Começar treino</button>
+        <button onclick="iniciarTreino()">Começar treino selecionado</button>
         <button class="btn-secundario" onclick="voltarMenu()">Voltar</button>
       </div>
 
@@ -644,6 +809,41 @@
     let modoEdicao = false;
     let indiceTreinoEditando = null;
 
+
+    const diasSemanaTreino = [
+      { chave: "segunda", nome: "Segunda-feira", numero: 1 },
+      { chave: "terca", nome: "Terça-feira", numero: 2 },
+      { chave: "quarta", nome: "Quarta-feira", numero: 3 },
+      { chave: "quinta", nome: "Quinta-feira", numero: 4 },
+      { chave: "sexta", nome: "Sexta-feira", numero: 5 },
+      { chave: "sabado", nome: "Sábado", numero: 6 }
+    ];
+
+    function abrirCriador() {
+      abrirCriadorNovo();
+    }
+
+    function normalizarNomeAluno(nome) {
+      return (nome || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+    }
+
+    function formatarNomeAluno(nome) {
+      const texto = (nome || "").replace(/-/g, " ").trim();
+      if (!texto) return "Aluno";
+      return texto.replace(/\b\w/g, letra => letra.toUpperCase());
+    }
+
+    function pegarAlunoDaURL() {
+      const params = new URLSearchParams(window.location.search);
+      return normalizarNomeAluno(params.get("aluno") || params.get("nome") || "");
+    }
+
     function esconderTelas() {
       const telas = [
         "telaMenu",
@@ -653,7 +853,8 @@
         "telaCriador",
         "telaTreino",
         "telaFinal",
-        "telaCargas"
+        "telaCargas",
+        "telaSemana"
       ];
 
       telas.forEach(id => {
@@ -671,6 +872,21 @@
       esconderTelas();
       document.getElementById("telaAluno").style.display = "block";
       carregarSelectTreinos();
+
+      aluno = pegarAlunoDaURL();
+      document.getElementById("nomeAluno").value = aluno;
+
+      if (aluno) {
+        document.getElementById("nomeAlunoAutomatico").innerText = formatarNomeAluno(aluno);
+        document.getElementById("boxAlunoIdentificado").style.display = "block";
+        document.getElementById("avisoLinkAluno").style.display = "none";
+      } else {
+        document.getElementById("nomeAlunoAutomatico").innerText = "Aluno não identificado";
+        document.getElementById("boxAlunoIdentificado").style.display = "block";
+        document.getElementById("avisoLinkAluno").style.display = "block";
+      }
+
+      renderizarSemanaAluno();
       mostrarRanking();
     }
 
@@ -752,6 +968,195 @@
       return [...treinosPadrao, ...obterTreinosCriados()];
     }
 
+
+    function obterSemanasAlunos() {
+      return JSON.parse(localStorage.getItem("semanasFFIT")) || {};
+    }
+
+    function salvarSemanasAlunos(semanas) {
+      localStorage.setItem("semanasFFIT", JSON.stringify(semanas));
+    }
+
+    function obterNomeTreinoPorId(idTreino) {
+      if (!idTreino) return "Livre / descanso";
+      const treino = obterTodosTreinos().find(item => item.id === idTreino);
+      return treino ? treino.nome : "Treino não encontrado";
+    }
+
+    function abrirTelaSemana() {
+      esconderTelas();
+      document.getElementById("telaSemana").style.display = "block";
+      preencherSelectsSemana();
+      atualizarListaSemanasProfessor();
+    }
+
+    function preencherSelectsSemana() {
+      const treinos = obterTodosTreinos();
+
+      diasSemanaTreino.forEach(dia => {
+        const select = document.getElementById("semana_" + dia.chave);
+        select.innerHTML = "<option value=''>Livre / descanso</option>";
+
+        treinos.forEach(treino => {
+          const option = document.createElement("option");
+          option.value = treino.id;
+          option.innerText = treino.nome;
+          select.appendChild(option);
+        });
+      });
+    }
+
+    function carregarSemanaDigitada() {
+      const nome = normalizarNomeAluno(document.getElementById("nomeAlunoSemana").value);
+      const semanas = obterSemanasAlunos();
+      const cadastro = semanas[nome];
+
+      diasSemanaTreino.forEach(dia => {
+        const select = document.getElementById("semana_" + dia.chave);
+        select.value = cadastro && cadastro.dias ? (cadastro.dias[dia.chave] || "") : "";
+      });
+    }
+
+    function salvarSemanaAluno() {
+      const nomeDigitado = document.getElementById("nomeAlunoSemana").value.trim();
+      const chaveAluno = normalizarNomeAluno(nomeDigitado);
+
+      if (!chaveAluno) {
+        alert("Digite o nome do aluno.");
+        return;
+      }
+
+      const semanas = obterSemanasAlunos();
+      const dias = {};
+
+      diasSemanaTreino.forEach(dia => {
+        dias[dia.chave] = document.getElementById("semana_" + dia.chave).value;
+      });
+
+      semanas[chaveAluno] = {
+        nome: formatarNomeAluno(chaveAluno),
+        dias: dias,
+        atualizadoEm: new Date().toLocaleString("pt-BR")
+      };
+
+      salvarSemanasAlunos(semanas);
+      atualizarListaSemanasProfessor();
+      alert("Semana do aluno salva com sucesso.");
+    }
+
+    function atualizarListaSemanasProfessor() {
+      const semanas = obterSemanasAlunos();
+      const div = document.getElementById("listaSemanasProfessor");
+      const alunos = Object.keys(semanas).sort();
+
+      if (alunos.length === 0) {
+        div.innerHTML = "<p class='texto-central'>Nenhuma semana cadastrada ainda.</p>";
+        return;
+      }
+
+      let html = "";
+      const baseUrl = window.location.origin + window.location.pathname;
+
+      alunos.forEach(chaveAluno => {
+        const cadastro = semanas[chaveAluno];
+        const link = baseUrl + "?aluno=" + chaveAluno;
+
+        let resumo = "";
+        diasSemanaTreino.forEach(dia => {
+          resumo += `<small>${dia.nome}: ${obterNomeTreinoPorId(cadastro.dias[dia.chave])}</small>`;
+        });
+
+        html += `
+          <div class="semana-item">
+            <strong>${cadastro.nome}</strong>
+            ${resumo}
+            <div class="link-aluno">${link}</div>
+            <div class="item-acoes" style="margin-top:10px;">
+              <button class="btn-pequeno btn-secundario" onclick="copiarLinkAluno('${chaveAluno}')">Copiar link</button>
+              <button class="btn-pequeno btn-secundario" onclick="editarSemanaAluno('${chaveAluno}')">Editar</button>
+              <button class="btn-pequeno btn-perigo" onclick="excluirSemanaAluno('${chaveAluno}')">Excluir</button>
+            </div>
+          </div>
+        `;
+      });
+
+      div.innerHTML = html;
+    }
+
+    function copiarLinkAluno(chaveAluno) {
+      const link = window.location.origin + window.location.pathname + "?aluno=" + chaveAluno;
+      navigator.clipboard.writeText(link).then(() => {
+        alert("Link do aluno copiado.");
+      }).catch(() => {
+        prompt("Copie o link do aluno:", link);
+      });
+    }
+
+    function editarSemanaAluno(chaveAluno) {
+      document.getElementById("nomeAlunoSemana").value = chaveAluno;
+      carregarSemanaDigitada();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function excluirSemanaAluno(chaveAluno) {
+      const confirmar = confirm("Deseja excluir a semana desse aluno?");
+      if (!confirmar) return;
+
+      const semanas = obterSemanasAlunos();
+      delete semanas[chaveAluno];
+      salvarSemanasAlunos(semanas);
+      atualizarListaSemanasProfessor();
+    }
+
+    function renderizarSemanaAluno() {
+      const div = document.getElementById("semanaTreinoAluno");
+      const alunoUrl = pegarAlunoDaURL();
+      const semanas = obterSemanasAlunos();
+      const cadastro = semanas[alunoUrl];
+      const hojeNumero = new Date().getDay();
+
+      if (!alunoUrl) {
+        div.innerHTML = "<p class='texto-central'>Use o link individual do aluno para carregar a semana automaticamente.</p>";
+        return;
+      }
+
+      if (!cadastro) {
+        div.innerHTML = "<p class='texto-central'>Nenhuma semana cadastrada para esse aluno ainda.</p>";
+        return;
+      }
+
+      let html = "";
+
+      diasSemanaTreino.forEach(dia => {
+        const idTreino = cadastro.dias[dia.chave] || "";
+        const nomeTreino = obterNomeTreinoPorId(idTreino);
+        const ehHoje = hojeNumero === dia.numero;
+        const classeHoje = ehHoje ? " hoje" : "";
+        const badgeHoje = ehHoje ? "<span class='badge-hoje'>HOJE</span>" : "";
+        const botao = idTreino
+          ? `<button class="btn-pequeno" onclick="iniciarTreinoPorId('${idTreino}')">Abrir</button>`
+          : `<button class="btn-pequeno btn-secundario" disabled>Descanso</button>`;
+
+        html += `
+          <div class="dia-card${classeHoje}">
+            <div>
+              <strong>${dia.nome} ${badgeHoje}</strong>
+              <small>${nomeTreino}</small>
+            </div>
+            ${botao}
+          </div>
+        `;
+      });
+
+      div.innerHTML = html;
+    }
+
+    function iniciarTreinoPorId(idTreino) {
+      const select = document.getElementById("tipoTreino");
+      select.value = idTreino;
+      iniciarTreino();
+    }
+
     function carregarSelectTreinos() {
       const select = document.getElementById("tipoTreino");
       const treinos = obterTodosTreinos();
@@ -812,7 +1217,7 @@
       const chave = obterChaveCarga(exercicio.nome);
 
       cargas[chave] = {
-        aluno: aluno,
+        aluno: formatarNomeAluno(aluno),
         exercicio: exercicio.nome,
         carga: carga,
         data: new Date().toLocaleString("pt-BR")
@@ -874,12 +1279,14 @@
     }
 
     function iniciarTreino() {
-      aluno = document.getElementById("nomeAluno").value.trim();
+      aluno = pegarAlunoDaURL() || document.getElementById("nomeAluno").value.trim();
 
       if (aluno === "") {
-        alert("Digite o nome do aluno.");
+        alert("Aluno não identificado. Abra pelo link individual do aluno, exemplo: ?aluno=andreia");
         return;
       }
+
+      document.getElementById("nomeAluno").value = aluno;
 
       const idTreino = document.getElementById("tipoTreino").value;
       const treino = obterTodosTreinos().find(item => item.id === idTreino);
@@ -901,7 +1308,7 @@
 
       esconderTelas();
       document.getElementById("telaTreino").style.display = "block";
-      document.getElementById("alunoAtual").innerText = aluno;
+      document.getElementById("alunoAtual").innerText = formatarNomeAluno(aluno);
 
       carregarExercicio();
       atualizarPontos();
@@ -1032,20 +1439,21 @@
       esconderTelas();
       document.getElementById("telaFinal").style.display = "block";
 
-      document.getElementById("alunoFinal").innerText = aluno;
+      document.getElementById("alunoFinal").innerText = formatarNomeAluno(aluno);
       document.getElementById("pontuacaoFinal").innerText = pontos;
     }
 
     function salvarRanking() {
       let ranking = JSON.parse(localStorage.getItem("rankingFFIT")) || [];
 
-      const alunoExistente = ranking.find(item => item.nome.toLowerCase() === aluno.toLowerCase());
+      const alunoFormatado = formatarNomeAluno(aluno);
+      const alunoExistente = ranking.find(item => item.nome.toLowerCase() === alunoFormatado.toLowerCase());
 
       if (alunoExistente) {
         alunoExistente.pontos += pontos;
       } else {
         ranking.push({
-          nome: aluno,
+          nome: formatarNomeAluno(aluno),
           pontos: pontos
         });
       }
