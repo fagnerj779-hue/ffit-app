@@ -466,6 +466,53 @@
       padding: 10px;
     }
 
+
+
+    .controle-treino-box {
+      background: #0f0f0f;
+      border: 1px solid rgba(229, 9, 20, 0.35);
+      border-radius: 14px;
+      padding: 12px;
+      margin: 12px 0 16px;
+      text-align: center;
+      color: #eee;
+    }
+
+    .controle-treino-box strong {
+      color: #fff;
+    }
+
+    .barra-progresso {
+      width: 100%;
+      height: 10px;
+      background: #333;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .barra-progresso div {
+      height: 100%;
+      width: 0%;
+      background: #e50914;
+      border-radius: 999px;
+    }
+
+    .status-treino {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: #333;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .status-trocar {
+      background: #e50914;
+      color: #fff;
+    }
+
     @media (max-width: 600px) {
       .logo {
         font-size: 30px;
@@ -665,7 +712,10 @@
       </div>
 
       <label>Nome do treino</label>
-      <input type="text" id="nomeTreinoNovo" placeholder="Ex: Treino Andréia - Glúteo" />
+      <input type="text" id="nomeTreinoNovo" placeholder="Ex: Andreia - Glúteo" />
+
+      <label>Quantidade de vezes que o aluno pode fazer esse treino</label>
+      <input type="number" id="limiteTreinoNovo" placeholder="Ex: 12" min="1" max="99" value="12" />
 
       <label>Nome do exercício</label>
       <input type="text" id="nomeExercicioNovo" placeholder="Ex: SUPINO RETO BARRA" />
@@ -702,6 +752,7 @@
         <div class="nome-aluno">Aluno: <span id="alunoAtual"></span></div>
         <button class="btn-secundario" style="margin-top:12px;" onclick="trocarAluno()">Trocar aluno</button>
         <div class="ranking">🏆 Posição: <span id="posicaoAluno">1</span> | Pontos: <span id="pontosAluno">0</span></div>
+        <div id="controleTreinoAluno" class="controle-treino-box"></div>
       </div>
 
       <div class="media-area">
@@ -809,6 +860,7 @@
     let modoEdicao = false;
     let indiceTreinoEditando = null;
     let treinoLinkAtual = null;
+    let treinoAtualObjeto = null;
 
 
     const diasSemanaTreino = [
@@ -938,6 +990,93 @@
       });
     }
 
+
+    function obterControlesTreino() {
+      return JSON.parse(localStorage.getItem("controlesTreinoFFIT")) || {};
+    }
+
+    function salvarControlesTreino(controles) {
+      localStorage.setItem("controlesTreinoFFIT", JSON.stringify(controles));
+    }
+
+    function obterChaveControleTreino(treino) {
+      const id = treino && treino.id ? treino.id : normalizarNomeAluno(treino && treino.nome ? treino.nome : "treino");
+      return "controle__" + id;
+    }
+
+    function obterLimiteTreino(treino) {
+      const limite = Number(treino && treino.limiteTreinos);
+      return limite > 0 ? limite : 12;
+    }
+
+    function obterFeitosTreino(treino) {
+      const controles = obterControlesTreino();
+      const chave = obterChaveControleTreino(treino);
+      const registro = controles[chave];
+      if (registro && Number(registro.feitos) >= 0) return Number(registro.feitos);
+      if (treino && Number(treino.treinosFeitos) >= 0) return Number(treino.treinosFeitos);
+      return 0;
+    }
+
+    function atualizarControleVisualAluno() {
+      const div = document.getElementById("controleTreinoAluno");
+      if (!div || !treinoAtualObjeto) return;
+
+      const feitos = obterFeitosTreino(treinoAtualObjeto);
+      const limite = obterLimiteTreino(treinoAtualObjeto);
+      const faltam = Math.max(limite - feitos, 0);
+      const percentual = Math.min((feitos / limite) * 100, 100);
+      const status = feitos >= limite ? "Hora de trocar o treino" : "Em andamento";
+      const statusClasse = feitos >= limite ? "status-treino status-trocar" : "status-treino";
+
+      div.innerHTML = `
+        <strong>Controle do treino</strong><br>
+        ${feitos} de ${limite} treinos realizados<br>
+        Faltam ${faltam} treino(s) para trocar
+        <div class="barra-progresso"><div style="width:${percentual}%"></div></div>
+        <span class="${statusClasse}">${status}</span>
+      `;
+    }
+
+    function registrarTreinoRealizado() {
+      if (!treinoAtualObjeto) return;
+
+      const controles = obterControlesTreino();
+      const chave = obterChaveControleTreino(treinoAtualObjeto);
+      const limite = obterLimiteTreino(treinoAtualObjeto);
+      const feitosAtuais = obterFeitosTreino(treinoAtualObjeto);
+
+      controles[chave] = {
+        treinoId: treinoAtualObjeto.id || "",
+        nomeTreino: treinoAtualObjeto.nome || "Treino",
+        aluno: formatarNomeAluno(aluno),
+        limite: limite,
+        feitos: feitosAtuais + 1,
+        ultimaConclusao: new Date().toLocaleString("pt-BR")
+      };
+
+      salvarControlesTreino(controles);
+    }
+
+    function zerarContadorTreinoCriado(index) {
+      const treinos = obterTreinosCriados();
+      const treino = treinos[index];
+      if (!treino) return;
+
+      const confirmar = confirm("Deseja zerar o contador desse treino?");
+      if (!confirmar) return;
+
+      const controles = obterControlesTreino();
+      delete controles[obterChaveControleTreino(treino)];
+      salvarControlesTreino(controles);
+
+      treinos[index].treinosFeitos = 0;
+      salvarTreinosCriados(treinos);
+
+      atualizarListaTreinosProfessor();
+      alert("Contador zerado.");
+    }
+
     function esconderTelas() {
       const telas = [
         "telaMenu",
@@ -1052,6 +1191,7 @@
 
       document.getElementById("tituloCriador").innerText = "Criar treino";
       document.getElementById("nomeTreinoNovo").value = "";
+      document.getElementById("limiteTreinoNovo").value = 12;
       limparCamposExercicio();
 
       esconderTelas();
@@ -1074,6 +1214,7 @@
 
       document.getElementById("tituloCriador").innerText = "Editar treino";
       document.getElementById("nomeTreinoNovo").value = treino.nome;
+      document.getElementById("limiteTreinoNovo").value = obterLimiteTreino(treino);
       limparCamposExercicio();
 
       esconderTelas();
@@ -1433,6 +1574,7 @@
         return;
       }
 
+      treinoAtualObjeto = treino;
       treinoSelecionado = treino.exercicios;
       exercicioAtual = 0;
       pontos = 0;
@@ -1441,6 +1583,7 @@
       esconderTelas();
       document.getElementById("telaTreino").style.display = "block";
       document.getElementById("alunoAtual").innerText = formatarNomeAluno(aluno);
+      atualizarControleVisualAluno();
 
       carregarExercicio();
       atualizarPontos();
@@ -1567,6 +1710,7 @@
 
     function finalizarTreino() {
       salvarRanking();
+      registrarTreinoRealizado();
 
       esconderTelas();
       document.getElementById("telaFinal").style.display = "block";
@@ -1804,9 +1948,15 @@
 
     function salvarTreinoNovo() {
       const nomeTreino = document.getElementById("nomeTreinoNovo").value.trim();
+      const limiteTreinos = Number(document.getElementById("limiteTreinoNovo").value) || 12;
 
       if (nomeTreino === "") {
         alert("Digite o nome do treino.");
+        return;
+      }
+
+      if (limiteTreinos < 1) {
+        alert("Digite uma quantidade válida de treinos.");
         return;
       }
 
@@ -1819,6 +1969,7 @@
 
       if (modoEdicao && indiceTreinoEditando !== null) {
         treinos[indiceTreinoEditando].nome = nomeTreino;
+        treinos[indiceTreinoEditando].limiteTreinos = limiteTreinos;
         treinos[indiceTreinoEditando].exercicios = exerciciosNovoTreino;
         salvarTreinosCriados(treinos);
         alert("Treino editado com sucesso.");
@@ -1827,6 +1978,8 @@
           id: "treino_" + Date.now(),
           nome: nomeTreino,
           padrao: false,
+          limiteTreinos: limiteTreinos,
+          treinosFeitos: 0,
           exercicios: exerciciosNovoTreino
         };
 
@@ -1840,6 +1993,7 @@
       exerciciosNovoTreino = [];
       limparCamposExercicio();
       document.getElementById("nomeTreinoNovo").value = "";
+      document.getElementById("limiteTreinoNovo").value = 12;
 
       carregarSelectTreinos();
       atualizarListaTreinosProfessor();
@@ -1863,10 +2017,13 @@
             <div>
               <strong>${treino.nome}</strong>
               <small>${treino.exercicios.length} exercícios cadastrados</small>
+              <small>Controle: ${obterFeitosTreino(treino)} de ${obterLimiteTreino(treino)} treinos realizados</small>
+              <small>${obterFeitosTreino(treino) >= obterLimiteTreino(treino) ? "Status: TROCAR TREINO" : "Status: Em andamento"}</small>
             </div>
             <div class="item-acoes">
               <button class="btn-pequeno" onclick="copiarLinkTreinoCriado(${index})">Copiar link</button>
               <button class="btn-pequeno btn-secundario" onclick="abrirCriadorEdicao(${index})">Editar</button>
+              <button class="btn-pequeno btn-secundario" onclick="zerarContadorTreinoCriado(${index})">Zerar contador</button>
               <button class="btn-pequeno btn-perigo" onclick="excluirTreinoCriado(${index})">Excluir</button>
             </div>
           </div>
